@@ -474,6 +474,15 @@ def guardar_gantt_png(fig):
 
     return output_path, filename
 
+def exportar_gantt_html(fig):
+    semana = get_week_label()
+    filename = f"Cronograma_{semana}.html"
+    buffer = io.StringIO()
+    html = fig.to_html(full_html=True, include_plotlyjs=True)
+    buffer.write(html)
+    buffer.seek(0)
+    return buffer, filename
+
 def generar_pdf(registro):
     fecha_id = datetime.now().strftime("%Y%m%d_%H%M%S")
     pdf_path = os.path.join(
@@ -946,8 +955,16 @@ elif menu == "Cronograma":
                         mime="image/png",
                         use_container_width=True
                     )
-            except Exception as e:
-                st.error(f"No se pudo exportar la imagen del Gantt: {e}")
+            except Exception:
+                html_buffer, html_name = exportar_gantt_html(fig)
+                st.download_button(
+                    "Exportar Gantt HTML",
+                    data=html_buffer.getvalue(),
+                    file_name=html_name,
+                    mime="text/html",
+                    use_container_width=True
+                )
+                st.warning("En este servidor no se pudo generar PNG. Se habilitó la descarga HTML del Gantt.")
 
     else:
         st.info("No hay actividades registradas todavía.")
