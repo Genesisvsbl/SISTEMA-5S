@@ -374,9 +374,22 @@ def get_week_label(fecha_ref=None):
     year, week_num, _ = fecha_ref.isocalendar()
     return f"Semana_{week_num:02d}_{year}"
 
+def normalizar_items_legacy(items):
+    normalizados = []
+    for item in items:
+        if "fotos" not in item:
+            foto_unica = item.get("foto")
+            item["fotos"] = [foto_unica] if foto_unica else []
+        normalizados.append(item)
+    return normalizados
+
 def append_to_excel(registro):
     rows = []
     for item in registro["items"]:
+        fotos = item.get("fotos", [])
+        if not fotos and item.get("foto"):
+            fotos = [item.get("foto")]
+
         rows.append({
             "Fecha": registro["fecha"],
             "Responsable": registro["responsable"],
@@ -385,7 +398,8 @@ def append_to_excel(registro):
             "Punto": item["punto"],
             "Cumple": "Sí" if item["cumple"] else "No",
             "Observación": item["observacion"],
-            "Foto": item["foto"] if item["foto"] else "",
+            "Fotos": " | ".join(fotos) if fotos else "",
+            "Cantidad fotos": len(fotos),
             "Cumplimiento Total %": registro["cumplimiento"]
         })
 
@@ -408,7 +422,12 @@ def append_to_excel(registro):
 def rebuild_excel_from_inspections(inspecciones):
     rows = []
     for registro in inspecciones:
-        for item in registro["items"]:
+        items = normalizar_items_legacy(registro.get("items", []))
+        for item in items:
+            fotos = item.get("fotos", [])
+            if not fotos and item.get("foto"):
+                fotos = [item.get("foto")]
+
             rows.append({
                 "Fecha": registro["fecha"],
                 "Responsable": registro["responsable"],
@@ -417,9 +436,11 @@ def rebuild_excel_from_inspections(inspecciones):
                 "Punto": item["punto"],
                 "Cumple": "Sí" if item["cumple"] else "No",
                 "Observación": item["observacion"],
-                "Foto": item["foto"] if item["foto"] else "",
+                "Fotos": " | ".join(fotos) if fotos else "",
+                "Cantidad fotos": len(fotos),
                 "Cumplimiento Total %": registro["cumplimiento"]
             })
+
     if rows:
         df = pd.DataFrame(rows)
         with pd.ExcelWriter(EXCEL_PATH, engine="openpyxl") as writer:
@@ -641,11 +662,12 @@ def generar_pdf(registro):
     story.append(desc_box)
     story.append(Spacer(1, 0.40 * cm))
 
+    items = normalizar_items_legacy(registro["items"])
     cumplimiento = registro["cumplimiento"]
-    total_items = len(registro["items"])
-    cumplidos = sum(1 for x in registro["items"] if x["cumple"])
+    total_items = len(items)
+    cumplidos = sum(1 for x in items if x["cumple"])
     no_conformes = total_items - cumplidos
-    hallazgos = [x for x in registro["items"] if (not x["cumple"]) or (x["observacion"] and x["observacion"].strip())]
+    hallazgos = [x for x in items if (not x["cumple"]) or (x["observacion"] and x["observacion"].strip())]
 
     story.append(Paragraph("1. Resumen ejecutivo", styles["HBlue"]))
     resumen_data = [
@@ -669,16 +691,18 @@ def generar_pdf(registro):
     story.append(Spacer(1, 0.45 * cm))
 
     story.append(Paragraph("2. Matriz técnica de verificación", styles["HBlue"]))
-    detalle = [["Ítem", "Punto evaluado", "Estado", "Observación"]]
-    for i, item in enumerate(registro["items"], start=1):
+    detalle = [["Ítem", "Punto evaluado", "Estado", "Observación", "Fotos"]]
+    for i, item in enumerate(items, start=1):
+        fotos = item.get("fotos", [])
         detalle.append([
             str(i),
             Paragraph(item["punto"], styles["NormalSmall"]),
             "Conforme" if item["cumple"] else "No conforme",
-            Paragraph(item["observacion"] if item["observacion"] else "-", styles["NormalSmall"])
+            Paragraph(item["observacion"] if item["observacion"] else "-", styles["NormalSmall"]),
+            str(len(fotos))
         ])
 
-    detalle_table = Table(detalle, colWidths=[1.0 * cm, 7.8 * cm, 2.4 * cm, 4.5 * cm], repeatRows=1)
+    detalle_table = Table(detalle, colWidths=[1.0 * cm, 7.0 * cm, 2.2 * cm, 4.2 * cm, 1.4 * cm], repeatRows=1)
     detalle_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#061f45")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
@@ -695,48 +719,55 @@ def generar_pdf(registro):
         for i, item in enumerate(hallazgos, start=1):
             texto = f"<b>{i}.</b> {item['punto']}<br/>"
             texto += "Estado: Conforme con observación.<br/>" if item["cumple"] else "Estado: No conforme.<br/>"
-            texto += f"Observación: {item['observacion'] if item['observacion'] else 'Sin detalle adicional.'}"
+            texto += f"Observación: {item['observacion'] if item['observacion'] else 'Sin detalle adicional.'}<br/>"
+            texto += f"Cantidad de evidencias: {len(item.get('fotos', []))}"
             story.append(Paragraph(texto, styles["Normal"]))
             story.append(Spacer(1, 0.15 * cm))
     else:
         story.append(Paragraph("No se registraron hallazgos relevantes en la evaluación realizada.", styles["Normal"]))
 
-    evidencias = [x for x in registro["items"] if x["foto"]]
+    evidencias = [x for x in items if x.get("fotos")]
     if evidencias:
         story.append(PageBreak())
         story.append(Paragraph("4. Evidencias fotográficas", styles["HBlue"]))
         story.append(Spacer(1, 0.15 * cm))
 
-        for i, item in enumerate(evidencias, start=1):
-            story.append(Paragraph(f"<b>Evidencia {i}</b> - {item['punto']}", styles["Normal"]))
+        contador_evidencia = 1
+        for item in evidencias:
+            story.append(Paragraph(f"<b>Punto evaluado:</b> {item['punto']}", styles["Normal"]))
             if item["observacion"]:
                 story.append(Paragraph(f"Observación asociada: {item['observacion']}", styles["PhotoCaption"]))
-            story.append(Spacer(1, 0.12 * cm))
+            story.append(Spacer(1, 0.10 * cm))
 
-            try:
-                resize_image(item["foto"], max_width=1300)
-                w_px, h_px = fit_image_box(item["foto"], max_w_px=980, max_h_px=520)
-                w_scale = min((w_px / 96), 15.2)
-                h_scale = min((h_px / 96), 8.3)
+            for foto in item.get("fotos", []):
+                try:
+                    story.append(Paragraph(f"<b>Evidencia {contador_evidencia}</b>", styles["PhotoCaption"]))
+                    resize_image(foto, max_width=1300)
+                    w_px, h_px = fit_image_box(foto, max_w_px=980, max_h_px=520)
+                    w_scale = min((w_px / 96), 15.2)
+                    h_scale = min((h_px / 96), 8.3)
 
-                img = RLImage(item["foto"], width=w_scale * cm, height=h_scale * cm)
+                    img = RLImage(foto, width=w_scale * cm, height=h_scale * cm)
 
-                img_table = Table([[img]], colWidths=[16.0 * cm])
-                img_table.setStyle(TableStyle([
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                    ("BOX", (0, 0), (-1, -1), 0.6, colors.HexColor("#d1dce8")),
-                    ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f8fbff")),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 10),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-                    ("TOPPADDING", (0, 0), (-1, -1), 10),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-                ]))
-                story.append(img_table)
-                story.append(Spacer(1, 0.28 * cm))
-            except Exception:
-                story.append(Paragraph("No fue posible cargar la evidencia fotográfica.", styles["PhotoCaption"]))
-                story.append(Spacer(1, 0.2 * cm))
+                    img_table = Table([[img]], colWidths=[16.0 * cm])
+                    img_table.setStyle(TableStyle([
+                        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                        ("BOX", (0, 0), (-1, -1), 0.6, colors.HexColor("#d1dce8")),
+                        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f8fbff")),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                        ("TOPPADDING", (0, 0), (-1, -1), 10),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                    ]))
+                    story.append(img_table)
+                    story.append(Spacer(1, 0.25 * cm))
+                    contador_evidencia += 1
+                except Exception:
+                    story.append(Paragraph("No fue posible cargar una de las evidencias fotográficas.", styles["PhotoCaption"]))
+                    story.append(Spacer(1, 0.15 * cm))
+
+            story.append(Spacer(1, 0.18 * cm))
 
     doc.build(story)
     return pdf_path
@@ -747,7 +778,10 @@ def init_session():
     if "cronograma" not in st.session_state:
         st.session_state.cronograma = safe_load_json(SCHEDULE_PATH, [])
     if "inspecciones" not in st.session_state:
-        st.session_state.inspecciones = safe_load_json(DB_PATH, [])
+        inspecciones_cargadas = safe_load_json(DB_PATH, [])
+        for reg in inspecciones_cargadas:
+            reg["items"] = normalizar_items_legacy(reg.get("items", []))
+        st.session_state.inspecciones = inspecciones_cargadas
 
 init_session()
 
@@ -976,7 +1010,7 @@ elif menu == "Cronograma":
 # =========================================================
 elif menu == "Inspección":
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">Inspección por bodega con evidencia fotográfica</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Inspección por bodega con evidencia fotográfica múltiple</div>', unsafe_allow_html=True)
 
     st.markdown("### Selecciona una bodega")
     cols = st.columns(4)
@@ -1006,18 +1040,21 @@ elif menu == "Inspección":
 
     for idx, punto in enumerate(puntos, start=1):
         st.markdown('<div class="ins-card">', unsafe_allow_html=True)
-        box1, box2 = st.columns([1.0, 2.4])
+        box1, box2 = st.columns([1.1, 2.4])
 
         with box1:
             cumple = st.checkbox("Cumple", key=f"{bodega_actual}_{idx}_cumple")
-            foto = st.file_uploader(
-                f"Foto evidencia {idx}",
+            fotos = st.file_uploader(
+                f"Fotos evidencia {idx}",
                 type=["png", "jpg", "jpeg"],
+                accept_multiple_files=True,
                 key=f"{bodega_actual}_{idx}_foto"
             )
-            if foto is not None:
-                with st.expander("Ver evidencia cargada", expanded=False):
-                    st.image(foto, caption=f"Evidencia punto {idx}", use_container_width=True)
+
+            if fotos:
+                with st.expander(f"Ver {len(fotos)} evidencia(s) cargada(s)", expanded=False):
+                    for n_foto, foto_item in enumerate(fotos, start=1):
+                        st.image(foto_item, caption=f"Evidencia {idx}.{n_foto}", use_container_width=True)
 
         with box2:
             st.markdown(f'<div class="punto-title">Punto {idx}</div>', unsafe_allow_html=True)
@@ -1035,7 +1072,7 @@ elif menu == "Inspección":
             "punto": punto,
             "cumple": cumple,
             "observacion": observacion,
-            "foto_obj": foto
+            "foto_obj": fotos
         })
 
     if st.button("Guardar inspección y generar informe PDF", type="primary", use_container_width=True):
@@ -1054,15 +1091,18 @@ elif menu == "Inspección":
                 if item["cumple"]:
                     cumplidos += 1
 
-                foto_path = None
-                if item["foto_obj"] is not None:
-                    foto_path = save_uploaded_image(item["foto_obj"], folder, f"evidencia_{i}")
+                foto_paths = []
+                if item["foto_obj"]:
+                    for j, foto_subida in enumerate(item["foto_obj"], start=1):
+                        foto_path = save_uploaded_image(foto_subida, folder, f"evidencia_{i}_{j}")
+                        if foto_path:
+                            foto_paths.append(foto_path)
 
                 items_final.append({
                     "punto": item["punto"],
                     "cumple": item["cumple"],
                     "observacion": item["observacion"],
-                    "foto": foto_path
+                    "fotos": foto_paths
                 })
 
             cumplimiento = (cumplidos / total) * 100 if total > 0 else 0
