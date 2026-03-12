@@ -39,8 +39,8 @@ os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(REPORTS_DIR, exist_ok=True)
 os.makedirs(EVIDENCE_DIR, exist_ok=True)
 
-LOGO_INOVA = r"C:\Users\JOSUE\Documents\VSBL\ALMACENAMIENTO\LOGOS\INOVA.png"
-LOGO_EASY = r"C:\Users\JOSUE\Documents\5S\FOND EASY.png"
+LOGO_INOVA = "INOVA.png"
+LOGO_EASY = "FOND EASY.png"
 
 # =========================================================
 # ESTILO UI WOW
