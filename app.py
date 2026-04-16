@@ -76,80 +76,170 @@ def mostrar_login():
     header {visibility:hidden;}
 
     .stApp {
-        background:
-            linear-gradient(rgba(240,245,251,0.96), rgba(240,245,251,0.96)),
-            linear-gradient(90deg, rgba(13,59,115,0.05) 1px, transparent 1px),
-            linear-gradient(rgba(13,59,115,0.05) 1px, transparent 1px);
-        background-size: auto, 56px 56px, 56px 56px;
+        background: #edf3f9;
     }
 
     .block-container{
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
+        padding: 0 !important;
         max-width: 100% !important;
     }
 
     .login-page{
         min-height: 100vh;
-        display: flex;
-        flex-direction: column;
+        background:
+            linear-gradient(rgba(236,242,248,0.95), rgba(236,242,248,0.95)),
+            linear-gradient(90deg, rgba(20,58,103,0.05) 1px, transparent 1px),
+            linear-gradient(rgba(20,58,103,0.05) 1px, transparent 1px);
+        background-size: auto, 58px 58px, 58px 58px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .login-circle-top{
+        position:absolute;
+        right: 140px;
+        top: 70px;
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        border: 18px solid rgba(20,58,103,0.04);
+        box-sizing:border-box;
+    }
+
+    .login-circle-bottom{
+        position:absolute;
+        left: 36px;
+        bottom: 20px;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        border: 16px solid rgba(20,58,103,0.04);
+        box-sizing:border-box;
     }
 
     .login-topbar{
         height: 64px;
-        background: rgba(255,255,255,0.96);
+        background: rgba(255,255,255,0.92);
         border-bottom: 1px solid #dbe5ef;
         display:flex;
         align-items:center;
         justify-content:space-between;
-        padding: 0 22px;
+        padding: 0 24px;
+        position: relative;
+        z-index: 2;
     }
 
     .login-brand-wrap{
+        display:flex;
+        align-items:center;
+        gap:12px;
+    }
+
+    .login-brand-text{
         display:flex;
         flex-direction:column;
         justify-content:center;
     }
 
     .login-brand{
-        color:#0a2d5e;
+        color:#0d2f5c;
         font-weight:800;
-        font-size:1.75rem;
+        font-size:1.55rem;
         line-height:1;
         margin:0;
     }
 
     .login-brand-sub{
-        font-size:0.82rem;
+        font-size:0.80rem;
         color:#6b7b8c;
         font-weight:600;
         margin-top:4px;
     }
 
     .login-safe{
-        background:#eef9f0;
-        border:1px solid #cfe9d6;
-        color:#1f7a39;
+        background:#eef8ef;
+        border:1px solid #cfe3d2;
+        color:#2a7a41;
         padding:8px 16px;
         border-radius:999px;
         font-size:0.82rem;
         font-weight:700;
     }
 
-    .login-main{
-        flex:1;
-        display:flex;
+    .login-shell{
+        position: relative;
+        z-index: 2;
+        min-height: calc(100vh - 64px);
+        display:grid;
+        grid-template-columns: minmax(700px, 1.25fr) minmax(360px, 0.75fr);
         align-items:center;
+        gap: 42px;
+        padding: 34px 30px;
+    }
+
+    .hero-wrap{
+        max-width: 980px;
+        padding-right: 10px;
+    }
+
+    .hero-badge{
+        display:inline-block;
+        background:#dfeeff;
+        color:#1763c9;
+        border:1px solid #bed8ff;
+        border-radius:999px;
+        padding:8px 14px;
+        font-size:0.78rem;
+        font-weight:800;
+        letter-spacing:0.3px;
+        margin-bottom:18px;
+    }
+
+    .hero-title{
+        color:#0d2f5c;
+        font-size:2.9rem;
+        line-height:1.08;
+        font-weight:900;
+        max-width: 920px;
+        margin:0 0 18px 0;
+    }
+
+    .hero-box{
+        background: rgba(255,255,255,0.72);
+        border:1px solid #dce6f0;
+        border-radius:20px;
+        padding:24px 24px 18px 24px;
+        max-width: 950px;
+        box-shadow: 0 8px 22px rgba(10,35,70,0.04);
+    }
+
+    .hero-box p{
+        color:#556578;
+        font-size:1rem;
+        line-height:1.7;
+        margin:0 0 14px 0;
+    }
+
+    .hero-box strong{
+        color:#32475c;
+    }
+
+    .hero-final{
+        margin-top:8px !important;
+        font-weight:900;
+        color:#0d2f5c !important;
+    }
+
+    .login-panel{
+        display:flex;
         justify-content:center;
-        padding: 28px;
+        align-items:center;
     }
 
     .login-card{
         width:100%;
-        max-width:420px;
-        background: rgba(255,255,255,0.98);
+        max-width: 430px;
+        background: rgba(255,255,255,0.97);
         border:1px solid #dbe5ef;
         border-radius:24px;
         box-shadow:0 18px 40px rgba(9,30,66,0.10);
@@ -157,7 +247,7 @@ def mostrar_login():
     }
 
     .login-head{
-        padding:28px 28px 18px 28px;
+        padding:28px 28px 16px 28px;
         text-align:center;
         border-bottom:1px solid #e7eef5;
         background:#ffffff;
@@ -182,7 +272,7 @@ def mostrar_login():
     }
 
     .login-body{
-        padding:22px 22px 20px 22px;
+        padding:22px 22px 18px 22px;
     }
 
     .login-footer-box{
@@ -202,7 +292,7 @@ def mostrar_login():
         font-size:0.74rem;
         margin-top:14px;
         font-weight:600;
-        padding-bottom:4px;
+        padding-bottom:2px;
     }
 
     div[data-testid="stTextInput"] label{
@@ -230,24 +320,63 @@ def mostrar_login():
         font-size:1rem !important;
         box-shadow:none !important;
     }
+
+    @media (max-width: 1100px){
+        .login-shell{
+            grid-template-columns: 1fr;
+            gap: 22px;
+            padding: 24px 18px 34px 18px;
+        }
+
+        .hero-wrap{
+            max-width: 100%;
+            padding-right: 0;
+        }
+
+        .hero-title{
+            font-size:2.25rem;
+            max-width: 100%;
+        }
+
+        .login-panel{
+            justify-content:center;
+        }
+    }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="login-page">', unsafe_allow_html=True)
-
     st.markdown("""
-    <div class="login-topbar">
-        <div class="login-brand-wrap">
-            <div class="login-brand">5S INOVA</div>
-            <div class="login-brand-sub">Control logístico</div>
+    <div class="login-page">
+        <div class="login-circle-top"></div>
+        <div class="login-circle-bottom"></div>
+
+        <div class="login-topbar">
+            <div class="login-brand-wrap">
+                <div class="login-brand-text">
+                    <div class="login-brand">5S INOVA</div>
+                    <div class="login-brand-sub">Control logístico</div>
+                </div>
+            </div>
+            <div class="login-safe">Acceso seguro</div>
         </div>
-        <div class="login-safe">Acceso seguro</div>
-    </div>
+
+        <div class="login-shell">
+            <div class="hero-wrap">
+                <div class="hero-badge">PLATAFORMA INTELIGENTE</div>
+                <div class="hero-title">
+                    Bienvenidos a INOVA: el sistema inteligente logístico que transforma la forma en que operamos.
+                </div>
+                <div class="hero-box">
+                    <p><strong>INOVA</strong> significa <strong>Inventario, Ocupación, Validación y Asignación</strong>. Cuatro pilares que redefinen la eficiencia operativa en cada movimiento.</p>
+                    <p>Con INOVA, cada entrada, salida y reasignación se gestiona con precisión. El índice de ocupación se actualiza en tiempo real, y la frescura de los productos se monitorea de forma continua.</p>
+                    <p>Este sistema está diseñado para equipos logísticos que exigen agilidad, trazabilidad y control total. INOVA no solo organiza: optimiza recursos, anticipa necesidades y potencia tu operación.</p>
+                    <p class="hero-final">Es momento de evolucionar. Es momento de INOVA.</p>
+                </div>
+            </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="login-main">', unsafe_allow_html=True)
+    st.markdown('<div class="login-panel">', unsafe_allow_html=True)
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
-
     st.markdown('<div class="login-head">', unsafe_allow_html=True)
 
     if os.path.exists(LOGO_INOVA):
@@ -275,16 +404,13 @@ def mostrar_login():
             st.error("Usuario o contraseña incorrectos.")
 
     st.markdown("""
-    <div class="login-footer-box">
-        La sesión permanece activa mientras la pestaña o el navegador estén abiertos.
-    </div>
-    <div class="login-copy">INOVA © 2026 · Warehouse Management System</div>
+        <div class="login-footer-box">
+            La sesión permanece activa mientras la pestaña o el navegador estén abiertos.
+        </div>
+        <div class="login-copy">INOVA © 2026 · Warehouse Management System</div>
     """, unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div></div></div></div></div>', unsafe_allow_html=True)
 
 # =========================================================
 # ESTILO UI WOW
@@ -1053,12 +1179,6 @@ with h2:
     """, unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-st.sidebar.markdown(f"**Usuario:** {st.session_state.usuario_actual}")
-if st.sidebar.button("Cerrar sesión", use_container_width=True):
-    st.session_state.autenticado = False
-    st.session_state.usuario_actual = ""
-    st.rerun()
-
 menu = st.sidebar.radio("Módulos", ["Inicio", "Cronograma", "Inspección", "Dashboard"])
 
 # =========================================================
@@ -1097,6 +1217,31 @@ if st.sidebar.button("Eliminar inspecciones del día", use_container_width=True)
         st.sidebar.success(f"Se eliminaron {borrados} inspecciones del día {fecha_txt}.")
     else:
         st.sidebar.info(f"No había inspecciones para {fecha_txt}.")
+
+# Espaciador para bajar el bloque de sesión
+st.sidebar.markdown("<div style='height: 60px;'></div>", unsafe_allow_html=True)
+st.sidebar.markdown("---")
+st.sidebar.markdown(
+    f"""
+    <div style="
+        background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+        border: 1px solid #dbe6f1;
+        border-radius: 16px;
+        padding: 14px 14px 10px 14px;
+        box-shadow: 0 6px 16px rgba(8, 32, 68, 0.04);
+        margin-top: 4px;
+    ">
+        <div style="font-size: 0.78rem; color: #6b7280; font-weight: 700; margin-bottom: 6px;">SESIÓN ACTIVA</div>
+        <div style="font-size: 1rem; color: #082b5c; font-weight: 800;">{st.session_state.usuario_actual}</div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+if st.sidebar.button("Cerrar sesión", use_container_width=True):
+    st.session_state.autenticado = False
+    st.session_state.usuario_actual = ""
+    st.rerun()
 
 # =========================================================
 # INICIO
