@@ -36,7 +36,7 @@ else:
     logo_icon = "📦"
 
 st.set_page_config(
-    page_title="Sistema 5S - INOVA",
+    page_title="5S INOVA",
     page_icon=logo_icon,
     layout="wide",
     initial_sidebar_state="expanded"
@@ -77,43 +77,55 @@ def mostrar_login():
 
     .stApp {
         background:
-            linear-gradient(rgba(240,245,251,0.94), rgba(240,245,251,0.94)),
+            linear-gradient(rgba(240,245,251,0.96), rgba(240,245,251,0.96)),
             linear-gradient(90deg, rgba(13,59,115,0.05) 1px, transparent 1px),
             linear-gradient(rgba(13,59,115,0.05) 1px, transparent 1px);
-        background-size: auto, 60px 60px, 60px 60px;
+        background-size: auto, 56px 56px, 56px 56px;
     }
 
     .block-container{
-        padding-top: 0.3rem;
-        padding-bottom: 0.5rem;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
         max-width: 100% !important;
     }
 
+    .login-page{
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
     .login-topbar{
-        height: 58px;
+        height: 64px;
         background: rgba(255,255,255,0.96);
         border-bottom: 1px solid #dbe5ef;
         display:flex;
         align-items:center;
         justify-content:space-between;
-        padding: 0 20px;
-        margin: -1rem -1rem 0.5rem -1rem;
+        padding: 0 22px;
+    }
+
+    .login-brand-wrap{
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
     }
 
     .login-brand{
-        display:flex;
-        align-items:center;
-        gap:10px;
         color:#0a2d5e;
         font-weight:800;
-        font-size:1.18rem;
+        font-size:1.75rem;
+        line-height:1;
+        margin:0;
     }
 
     .login-brand-sub{
-        font-size:0.76rem;
+        font-size:0.82rem;
         color:#6b7b8c;
         font-weight:600;
-        margin-top:-3px;
+        margin-top:4px;
     }
 
     .login-safe{
@@ -126,18 +138,18 @@ def mostrar_login():
         font-weight:700;
     }
 
-    .login-shell{
-        min-height: 82vh;
+    .login-main{
+        flex:1;
         display:flex;
         align-items:center;
-        justify-content:flex-end;
-        padding-right: 12%;
+        justify-content:center;
+        padding: 28px;
     }
 
     .login-card{
         width:100%;
-        max-width:430px;
-        background: rgba(255,255,255,0.97);
+        max-width:420px;
+        background: rgba(255,255,255,0.98);
         border:1px solid #dbe5ef;
         border-radius:24px;
         box-shadow:0 18px 40px rgba(9,30,66,0.10);
@@ -145,7 +157,7 @@ def mostrar_login():
     }
 
     .login-head{
-        padding:30px 30px 20px 30px;
+        padding:28px 28px 18px 28px;
         text-align:center;
         border-bottom:1px solid #e7eef5;
         background:#ffffff;
@@ -170,7 +182,7 @@ def mostrar_login():
     }
 
     .login-body{
-        padding:22px 22px 18px 22px;
+        padding:22px 22px 20px 22px;
     }
 
     .login-footer-box{
@@ -190,7 +202,7 @@ def mostrar_login():
         font-size:0.74rem;
         margin-top:14px;
         font-weight:600;
-        padding-bottom:12px;
+        padding-bottom:4px;
     }
 
     div[data-testid="stTextInput"] label{
@@ -221,55 +233,58 @@ def mostrar_login():
     </style>
     """, unsafe_allow_html=True)
 
+    st.markdown('<div class="login-page">', unsafe_allow_html=True)
+
     st.markdown("""
     <div class="login-topbar">
-        <div>
-            <div class="login-brand">WMS INOVA</div>
+        <div class="login-brand-wrap">
+            <div class="login-brand">5S INOVA</div>
             <div class="login-brand-sub">Control logístico</div>
         </div>
         <div class="login-safe">Acceso seguro</div>
     </div>
     """, unsafe_allow_html=True)
 
-    c1, c2, c3 = st.columns([1.6, 1, 1.1])
+    st.markdown('<div class="login-main">', unsafe_allow_html=True)
+    st.markdown('<div class="login-card">', unsafe_allow_html=True)
 
-    with c3:
-        st.markdown('<div class="login-shell"><div class="login-card">', unsafe_allow_html=True)
+    st.markdown('<div class="login-head">', unsafe_allow_html=True)
 
-        st.markdown('<div class="login-head">', unsafe_allow_html=True)
-
-        if os.path.exists(LOGO_INOVA):
-            st.markdown('<div class="login-logo">', unsafe_allow_html=True)
-            st.image(LOGO_INOVA, width=70)
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        st.markdown("""
-        <div class="login-title">Iniciar sesión</div>
-        <div class="login-subtitle">Ingrese sus credenciales para acceder al sistema.</div>
-        """, unsafe_allow_html=True)
-
+    if os.path.exists(LOGO_INOVA):
+        st.markdown('<div class="login-logo">', unsafe_allow_html=True)
+        st.image(LOGO_INOVA, width=70)
         st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown('<div class="login-body">', unsafe_allow_html=True)
 
-        usuario = st.text_input("USUARIO", placeholder="Ingrese su usuario").strip().upper()
-        clave = st.text_input("CONTRASEÑA", type="password", placeholder="Ingrese su contraseña")
+    st.markdown("""
+    <div class="login-title">Iniciar sesión</div>
+    <div class="login-subtitle">Ingrese sus credenciales para acceder al sistema.</div>
+    """, unsafe_allow_html=True)
 
-        if st.button("ACCEDER", use_container_width=True):
-            if usuario in USUARIOS_SISTEMA and USUARIOS_SISTEMA[usuario] == clave:
-                st.session_state.autenticado = True
-                st.session_state.usuario_actual = usuario
-                st.rerun()
-            else:
-                st.error("Usuario o contraseña incorrectos.")
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-body">', unsafe_allow_html=True)
 
-        st.markdown("""
-        <div class="login-footer-box">
-            La sesión permanece activa mientras la pestaña o el navegador estén abiertos.
-        </div>
-        <div class="login-copy">INOVA © 2026 · Warehouse Management System</div>
-        """, unsafe_allow_html=True)
+    usuario = st.text_input("USUARIO", placeholder="Ingrese su usuario").strip().upper()
+    clave = st.text_input("CONTRASEÑA", type="password", placeholder="Ingrese su contraseña")
 
-        st.markdown('</div></div></div>', unsafe_allow_html=True)
+    if st.button("ACCEDER", use_container_width=True):
+        if usuario in USUARIOS_SISTEMA and USUARIOS_SISTEMA[usuario] == clave:
+            st.session_state.autenticado = True
+            st.session_state.usuario_actual = usuario
+            st.rerun()
+        else:
+            st.error("Usuario o contraseña incorrectos.")
+
+    st.markdown("""
+    <div class="login-footer-box">
+        La sesión permanece activa mientras la pestaña o el navegador estén abiertos.
+    </div>
+    <div class="login-copy">INOVA © 2026 · Warehouse Management System</div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
 # ESTILO UI WOW
