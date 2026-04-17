@@ -76,13 +76,12 @@ def mostrar_login():
     header {visibility:hidden;}
 
     html, body, [data-testid="stAppViewContainer"], .stApp {
-        height: 100vh !important;
-        overflow: hidden !important;
         background:
-            linear-gradient(rgba(236,242,248,0.96), rgba(236,242,248,0.96)),
+            linear-gradient(rgba(236,242,248,0.97), rgba(236,242,248,0.97)),
             linear-gradient(90deg, rgba(20,58,103,0.05) 1px, transparent 1px),
             linear-gradient(rgba(20,58,103,0.05) 1px, transparent 1px);
         background-size: auto, 58px 58px, 58px 58px;
+        overflow: hidden !important;
     }
 
     .block-container{
@@ -90,15 +89,37 @@ def mostrar_login():
         max-width: 100% !important;
     }
 
-    .login-topbar{
-        background: rgba(255,255,255,0.94);
-        border-bottom: 1px solid #dbe5ef;
-        padding: 10px 22px;
-        height: 70px;
-        box-sizing: border-box;
+    .login-page{
+        height: 100vh;
+        overflow: hidden;
+        position: relative;
     }
 
-    .topbar-title{
+    .login-bg-circle-top{
+        position: fixed;
+        right: 120px;
+        top: 40px;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        border: 16px solid rgba(20,58,103,0.04);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .login-bg-circle-bottom{
+        position: fixed;
+        left: 28px;
+        bottom: 24px;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 14px solid rgba(20,58,103,0.04);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .login-header-title{
         color:#0d2f5c;
         font-weight:800;
         font-size:1.55rem;
@@ -106,14 +127,14 @@ def mostrar_login():
         margin:0;
     }
 
-    .topbar-sub{
+    .login-header-sub{
         color:#6b7b8c;
         font-weight:600;
         font-size:0.8rem;
         margin-top:4px;
     }
 
-    .safe-pill{
+    .login-safe-pill{
         display:inline-block;
         background:#eef8ef;
         border:1px solid #cfe3d2;
@@ -122,38 +143,8 @@ def mostrar_login():
         border-radius:999px;
         font-size:0.82rem;
         font-weight:700;
-        margin-top:6px;
+        margin-top:8px;
         float:right;
-    }
-
-    .login-main-fixed{
-        position: relative;
-        height: calc(100vh - 70px);
-        padding: 0 26px;
-        box-sizing: border-box;
-        overflow: hidden;
-    }
-
-    .login-circle-top{
-        position:absolute;
-        right: 120px;
-        top: 28px;
-        width: 220px;
-        height: 220px;
-        border-radius: 50%;
-        border: 16px solid rgba(20,58,103,0.04);
-        pointer-events:none;
-    }
-
-    .login-circle-bottom{
-        position:absolute;
-        left: 28px;
-        bottom: 20px;
-        width: 150px;
-        height: 150px;
-        border-radius: 50%;
-        border: 14px solid rgba(20,58,103,0.04);
-        pointer-events:none;
     }
 
     .login-card-title{
@@ -197,7 +188,7 @@ def mostrar_login():
         border-radius:24px !important;
         box-shadow:0 18px 40px rgba(9,30,66,0.10) !important;
         padding: 22px 22px 18px 22px !important;
-        margin-top: 90px !important;
+        margin-top: 8px !important;
     }
 
     div[data-testid="stForm"] > div{
@@ -235,54 +226,54 @@ def mostrar_login():
         html, body, [data-testid="stAppViewContainer"], .stApp {
             overflow-y: auto !important;
         }
-
-        .login-main-fixed{
-            height: auto;
-            min-height: calc(100vh - 70px);
-            padding-bottom: 24px;
-        }
-
-        div[data-testid="stForm"]{
-            margin-top: 20px !important;
-        }
     }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="login-topbar">', unsafe_allow_html=True)
-    top_left, top_right = st.columns([1.2, 0.4], gap="small")
+    st.markdown('<div class="login-page"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-bg-circle-top"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-bg-circle-bottom"></div>', unsafe_allow_html=True)
 
-    with top_left:
-        logo_col, text_col = st.columns([0.08, 0.92], gap="small")
-        with logo_col:
-            if os.path.exists(LOGO_INOVA):
-                st.image(LOGO_INOVA, width=42)
-        with text_col:
-            st.markdown('<div class="topbar-title">5S INOVA</div>', unsafe_allow_html=True)
-            st.markdown('<div class="topbar-sub">Control logístico</div>', unsafe_allow_html=True)
+    topbar = st.container()
+    with topbar:
+        st.markdown(
+            """
+            <style>
+            div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] .login-topbar-box {
+                background: rgba(255,255,255,0.94);
+                border-bottom: 1px solid #dbe5ef;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+        left_top, right_top = st.columns([1.3, 0.4], gap="small")
+        with left_top:
+            logo_col, text_col = st.columns([0.08, 0.92], gap="small")
+            with logo_col:
+                if os.path.exists(LOGO_INOVA):
+                    st.image(LOGO_INOVA, width=42)
+            with text_col:
+                st.markdown('<div class="login-header-title">5S INOVA</div>', unsafe_allow_html=True)
+                st.markdown('<div class="login-header-sub">Control logístico</div>', unsafe_allow_html=True)
 
-    with top_right:
-        st.markdown('<div class="safe-pill">Acceso seguro</div>', unsafe_allow_html=True)
+        with right_top:
+            st.markdown('<div class="login-safe-pill">Acceso seguro</div>', unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("<div style='height: 18px;'></div>", unsafe_allow_html=True)
 
-    st.markdown("""
-    <div class="login-main-fixed">
-        <div class="login-circle-top"></div>
-        <div class="login-circle-bottom"></div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    left, right = st.columns([1.55, 0.85], gap="large")
+    left, right = st.columns([1.7, 0.9], gap="large")
 
     with left:
         st.empty()
 
     with right:
+        st.markdown("<div style='height: 70px;'></div>", unsafe_allow_html=True)
+
         with st.form("login_form", clear_on_submit=False):
             if os.path.exists(LOGO_INOVA):
-                c_logo_1, c_logo_2, c_logo_3 = st.columns([1, 1, 1])
-                with c_logo_2:
+                c1, c2, c3 = st.columns([1, 1, 1])
+                with c2:
                     st.image(LOGO_INOVA, width=78)
 
             st.markdown('<div class="login-card-title">Iniciar sesión</div>', unsafe_allow_html=True)
