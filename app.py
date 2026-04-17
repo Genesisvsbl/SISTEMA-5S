@@ -397,7 +397,7 @@ def mostrar_login():
             if os.path.exists(LOGO_INOVA):
                 st.image(LOGO_INOVA, width=42)
         with brand_text:
-            st.markdown('<div class="login-brand-title">WMS INOVA</div>', unsafe_allow_html=True)
+            st.markdown('<div class="login-brand-title">5S INOVA</div>', unsafe_allow_html=True)
             st.markdown('<div class="login-brand-sub">Control logístico</div>', unsafe_allow_html=True)
 
     with top_right:
