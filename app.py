@@ -238,7 +238,7 @@ def mostrar_login():
 
     .login-card{
         width:100%;
-        max-width: 430px;
+        max-width:430px;
         background: rgba(255,255,255,0.97);
         border:1px solid #dbe5ef;
         border-radius:24px;
@@ -359,59 +359,66 @@ def mostrar_login():
             </div>
             <div class="login-safe">Acceso seguro</div>
         </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        <div class="login-shell">
-            <div class="hero-wrap">
-                <div class="hero-badge">PLATAFORMA INTELIGENTE</div>
-                <div class="hero-title">
-                    Bienvenidos a INOVA: el sistema inteligente logístico que transforma la forma en que operamos.
-                </div>
-                <div class="hero-box">
-                    <p><strong>INOVA</strong> significa <strong>Inventario, Ocupación, Validación y Asignación</strong>. Cuatro pilares que redefinen la eficiencia operativa en cada movimiento.</p>
-                    <p>Con INOVA, cada entrada, salida y reasignación se gestiona con precisión. El índice de ocupación se actualiza en tiempo real, y la frescura de los productos se monitorea de forma continua.</p>
-                    <p>Este sistema está diseñado para equipos logísticos que exigen agilidad, trazabilidad y control total. INOVA no solo organiza: optimiza recursos, anticipa necesidades y potencia tu operación.</p>
-                    <p class="hero-final">Es momento de evolucionar. Es momento de INOVA.</p>
-                </div>
+    col_left, col_right = st.columns([1.45, 0.75], gap="large")
+
+    with col_left:
+        st.markdown("""
+        <div class="hero-wrap">
+            <div class="hero-badge">PLATAFORMA INTELIGENTE</div>
+            <div class="hero-title">
+                Bienvenidos a INOVA: el sistema inteligente logístico que transforma la forma en que operamos.
             </div>
-            <div class="login-panel">
-                <div class="login-card">
-                    <div class="login-head">
-    """, unsafe_allow_html=True)
+            <div class="hero-box">
+                <p><strong>INOVA</strong> significa <strong>Inventario, Ocupación, Validación y Asignación</strong>. Cuatro pilares que redefinen la eficiencia operativa en cada movimiento.</p>
+                <p>Con INOVA, cada entrada, salida y reasignación se gestiona con precisión. El índice de ocupación se actualiza en tiempo real, y la frescura de los productos se monitorea de forma continua.</p>
+                <p>Este sistema está diseñado para equipos logísticos que exigen agilidad, trazabilidad y control total. INOVA no solo organiza: optimiza recursos, anticipa necesidades y potencia tu operación.</p>
+                <p class="hero-final">Es momento de evolucionar. Es momento de INOVA.</p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    if os.path.exists(LOGO_INOVA):
-        st.markdown('<div class="login-logo">', unsafe_allow_html=True)
-        st.image(LOGO_INOVA, width=70)
-        st.markdown('</div>', unsafe_allow_html=True)
+    with col_right:
+        st.markdown("""
+        <div class="login-panel">
+            <div class="login-card">
+                <div class="login-head">
+        """, unsafe_allow_html=True)
 
-    st.markdown("""
-                        <div class="login-title">Iniciar sesión</div>
-                        <div class="login-subtitle">Ingrese sus credenciales para acceder al sistema.</div>
+        if os.path.exists(LOGO_INOVA):
+            st.markdown('<div class="login-logo">', unsafe_allow_html=True)
+            st.image(LOGO_INOVA, width=70)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown("""
+                    <div class="login-title">Iniciar sesión</div>
+                    <div class="login-subtitle">Ingrese sus credenciales para acceder al sistema.</div>
+                </div>
+                <div class="login-body">
+        """, unsafe_allow_html=True)
+
+        usuario = st.text_input("USUARIO", placeholder="Ingrese su usuario").strip().upper()
+        clave = st.text_input("CONTRASEÑA", type="password", placeholder="Ingrese su contraseña")
+
+        if st.button("ACCEDER", use_container_width=True):
+            if usuario in USUARIOS_SISTEMA and USUARIOS_SISTEMA[usuario] == clave:
+                st.session_state.autenticado = True
+                st.session_state.usuario_actual = usuario
+                st.rerun()
+            else:
+                st.error("Usuario o contraseña incorrectos.")
+
+        st.markdown("""
+                    <div class="login-footer-box">
+                        La sesión permanece activa mientras la pestaña o el navegador estén abiertos.
                     </div>
-                    <div class="login-body">
-    """, unsafe_allow_html=True)
-
-    usuario = st.text_input("USUARIO", placeholder="Ingrese su usuario").strip().upper()
-    clave = st.text_input("CONTRASEÑA", type="password", placeholder="Ingrese su contraseña")
-
-    if st.button("ACCEDER", use_container_width=True):
-        if usuario in USUARIOS_SISTEMA and USUARIOS_SISTEMA[usuario] == clave:
-            st.session_state.autenticado = True
-            st.session_state.usuario_actual = usuario
-            st.rerun()
-        else:
-            st.error("Usuario o contraseña incorrectos.")
-
-    st.markdown("""
-                        <div class="login-footer-box">
-                            La sesión permanece activa mientras la pestaña o el navegador estén abiertos.
-                        </div>
-                        <div class="login-copy">INOVA © 2026 · Warehouse Management System</div>
-                    </div>
+                    <div class="login-copy">INOVA © 2026 · Warehouse Management System</div>
                 </div>
             </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
 # =========================================================
 # ESTILO UI WOW
