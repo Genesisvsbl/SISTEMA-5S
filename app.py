@@ -75,7 +75,7 @@ def mostrar_login():
     footer {visibility:hidden;}
     header {visibility:hidden;}
 
-    .stApp {
+    html, body, [data-testid="stAppViewContainer"], .stApp {
         background:
             linear-gradient(rgba(236,242,248,0.96), rgba(236,242,248,0.96)),
             linear-gradient(90deg, rgba(20,58,103,0.05) 1px, transparent 1px),
@@ -84,18 +84,14 @@ def mostrar_login():
     }
 
     .block-container{
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
+        padding: 0 !important;
         max-width: 100% !important;
     }
 
     .login-topbar{
         background: rgba(255,255,255,0.94);
         border-bottom: 1px solid #dbe5ef;
-        padding: 10px 22px;
-        margin-bottom: 0;
+        padding: 12px 22px;
     }
 
     .topbar-title{
@@ -122,65 +118,41 @@ def mostrar_login():
         border-radius:999px;
         font-size:0.82rem;
         font-weight:700;
-        margin-top: 8px;
-        float: right;
+        margin-top:6px;
+        float:right;
     }
 
-    .login-main-wrap{
-        padding: 26px 26px 24px 26px;
-        min-height: calc(100vh - 76px);
+    .login-area{
+        min-height: calc(100vh - 68px);
+        padding: 24px 24px 20px 24px;
+        position: relative;
+        overflow: hidden;
     }
 
-    .hero-badge{
-        display:inline-block;
-        background:#dfeeff;
-        color:#1763c9;
-        border:1px solid #bed8ff;
-        border-radius:999px;
-        padding:8px 14px;
-        font-size:0.78rem;
-        font-weight:800;
-        letter-spacing:0.3px;
-        margin-bottom:18px;
+    .login-circle-top{
+        position:absolute;
+        right: 120px;
+        top: 18px;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        border: 16px solid rgba(20,58,103,0.04);
+        pointer-events:none;
     }
 
-    .hero-title{
-        color:#0d2f5c;
-        font-size:3rem;
-        line-height:1.08;
-        font-weight:900;
-        margin:0 0 18px 0;
-        max-width: 980px;
+    .login-circle-bottom{
+        position:absolute;
+        left: 28px;
+        bottom: 18px;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 14px solid rgba(20,58,103,0.04);
+        pointer-events:none;
     }
 
-    .hero-box{
-        background: rgba(255,255,255,0.74);
-        border:1px solid #dce6f0;
-        border-radius:20px;
-        padding:24px 24px 18px 24px;
-        box-shadow: 0 8px 22px rgba(10,35,70,0.04);
-        max-width: 980px;
-    }
-
-    .hero-box p{
-        color:#556578;
-        font-size:0.98rem;
-        line-height:1.75;
-        margin:0 0 14px 0;
-    }
-
-    .hero-box strong{
-        color:#32475c;
-    }
-
-    .hero-final{
-        margin-top:8px !important;
-        font-weight:900 !important;
-        color:#0d2f5c !important;
-    }
-
-    .right-panel-wrap{
-        min-height: 700px;
+    .login-card-wrap{
+        min-height: calc(100vh - 120px);
         display:flex;
         align-items:center;
         justify-content:center;
@@ -245,26 +217,8 @@ def mostrar_login():
         margin-right:auto;
     }
 
-    .login-floating-circle-1{
-        position: fixed;
-        right: 180px;
-        top: 80px;
-        width: 240px;
-        height: 240px;
-        border-radius: 50%;
-        border: 18px solid rgba(20,58,103,0.04);
-        pointer-events:none;
-    }
-
-    .login-floating-circle-2{
-        position: fixed;
-        left: 40px;
-        bottom: 20px;
-        width: 170px;
-        height: 170px;
-        border-radius: 50%;
-        border: 16px solid rgba(20,58,103,0.04);
-        pointer-events:none;
+    .login-left-placeholder{
+        min-height: calc(100vh - 120px);
     }
 
     div[data-testid="stTextInput"] label{
@@ -294,27 +248,27 @@ def mostrar_login():
     }
 
     @media (max-width: 1100px){
-        .hero-title{
-            font-size:2.25rem;
-        }
-        .right-panel-wrap{
+        .login-card-wrap,
+        .login-left-placeholder{
             min-height:auto;
-            padding-top: 10px;
+        }
+
+        .login-area{
+            min-height:auto;
+            padding-bottom: 28px;
         }
     }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="login-floating-circle-1"></div><div class="login-floating-circle-2"></div>', unsafe_allow_html=True)
-
     st.markdown('<div class="login-topbar">', unsafe_allow_html=True)
     top_left, top_right = st.columns([1.2, 0.4], gap="small")
 
     with top_left:
-        logo_col, text_col = st.columns([0.09, 0.91], gap="small")
+        logo_col, text_col = st.columns([0.08, 0.92], gap="small")
         with logo_col:
             if os.path.exists(LOGO_INOVA):
-                st.image(LOGO_INOVA, width=44)
+                st.image(LOGO_INOVA, width=42)
         with text_col:
             st.markdown('<div class="topbar-title">5S INOVA</div>', unsafe_allow_html=True)
             st.markdown('<div class="topbar-sub">Control logístico</div>', unsafe_allow_html=True)
@@ -324,27 +278,14 @@ def mostrar_login():
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="login-main-wrap">', unsafe_allow_html=True)
-    left, right = st.columns([1.65, 0.85], gap="large")
+    st.markdown('<div class="login-area"><div class="login-circle-top"></div><div class="login-circle-bottom"></div>', unsafe_allow_html=True)
+    left, right = st.columns([1.55, 0.85], gap="large")
 
     with left:
-        st.markdown('<div class="hero-badge">PLATAFORMA INTELIGENTE</div>', unsafe_allow_html=True)
-        st.markdown("""
-        <div class="hero-title">
-            Bienvenidos a INOVA: el sistema inteligente logístico que transforma la forma en que operamos.
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown("""
-        <div class="hero-box">
-            <p><strong>INOVA</strong> significa <strong>Inventario, Ocupación, Validación y Asignación</strong>. Cuatro pilares que redefinen la eficiencia operativa en cada movimiento.</p>
-            <p>Con INOVA, cada entrada, salida y reasignación se gestiona con precisión. El índice de ocupación se actualiza en tiempo real, y la frescura de los productos se monitorea de forma continua.</p>
-            <p>Este sistema está diseñado para equipos logísticos que exigen agilidad, trazabilidad y control total. INOVA no solo organiza: optimiza recursos, anticipa necesidades y potencia tu operación.</p>
-            <p class="hero-final">Es momento de evolucionar. Es momento de INOVA.</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="login-left-placeholder"></div>', unsafe_allow_html=True)
 
     with right:
-        st.markdown('<div class="right-panel-wrap"><div class="login-card">', unsafe_allow_html=True)
+        st.markdown('<div class="login-card-wrap"><div class="login-card">', unsafe_allow_html=True)
         st.markdown('<div class="login-card-head">', unsafe_allow_html=True)
 
         if os.path.exists(LOGO_INOVA):
@@ -370,10 +311,11 @@ def mostrar_login():
 
         st.markdown("""
         <div class="login-foot-note">
-            La sesión permanece activa mientras la pestaña o el navegador estén abiertos. Al cerrarlos, se solicitará acceso nuevamente.
+            La sesión permanece activa mientras la pestaña o el navegador estén abiertos.
         </div>
         <div class="login-copy">INOVA © 2026 · Warehouse Management System</div>
         """, unsafe_allow_html=True)
+
         st.markdown('</div></div></div>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
