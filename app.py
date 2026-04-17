@@ -85,40 +85,28 @@ def mostrar_login():
 
     .block-container{
         padding-top: 0 !important;
+        padding-bottom: 0 !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
-        padding-bottom: 0 !important;
         max-width: 100% !important;
     }
 
     .login-topbar{
-        background: rgba(255,255,255,0.93);
+        background: rgba(255,255,255,0.94);
         border-bottom: 1px solid #dbe5ef;
-        padding: 14px 26px;
-        margin-bottom: 28px;
+        padding: 10px 22px;
+        margin-bottom: 0;
     }
 
-    .brand-row{
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-    }
-
-    .brand-left{
-        display:flex;
-        align-items:center;
-        gap:12px;
-    }
-
-    .brand-title{
+    .topbar-title{
         color:#0d2f5c;
         font-weight:800;
-        font-size:1.7rem;
+        font-size:1.55rem;
         line-height:1;
         margin:0;
     }
 
-    .brand-sub{
+    .topbar-sub{
         color:#6b7b8c;
         font-weight:600;
         font-size:0.8rem;
@@ -126,6 +114,7 @@ def mostrar_login():
     }
 
     .safe-pill{
+        display:inline-block;
         background:#eef8ef;
         border:1px solid #cfe3d2;
         color:#2a7a41;
@@ -133,10 +122,13 @@ def mostrar_login():
         border-radius:999px;
         font-size:0.82rem;
         font-weight:700;
+        margin-top: 8px;
+        float: right;
     }
 
-    .login-wrapper{
-        padding: 10px 28px 26px 28px;
+    .login-main-wrap{
+        padding: 26px 26px 24px 26px;
+        min-height: calc(100vh - 76px);
     }
 
     .hero-badge{
@@ -157,22 +149,28 @@ def mostrar_login():
         font-size:3rem;
         line-height:1.08;
         font-weight:900;
-        margin-bottom:18px;
+        margin:0 0 18px 0;
+        max-width: 980px;
     }
 
     .hero-box{
-        background: rgba(255,255,255,0.72);
+        background: rgba(255,255,255,0.74);
         border:1px solid #dce6f0;
         border-radius:20px;
-        padding:24px;
+        padding:24px 24px 18px 24px;
         box-shadow: 0 8px 22px rgba(10,35,70,0.04);
+        max-width: 980px;
     }
 
     .hero-box p{
         color:#556578;
-        font-size:1rem;
-        line-height:1.7;
+        font-size:0.98rem;
+        line-height:1.75;
         margin:0 0 14px 0;
+    }
+
+    .hero-box strong{
+        color:#32475c;
     }
 
     .hero-final{
@@ -181,17 +179,17 @@ def mostrar_login():
         color:#0d2f5c !important;
     }
 
-    .login-card-shell{
+    .right-panel-wrap{
+        min-height: 700px;
         display:flex;
-        justify-content:center;
         align-items:center;
-        min-height: 640px;
+        justify-content:center;
     }
 
     .login-card{
         width:100%;
         max-width:430px;
-        background: rgba(255,255,255,0.97);
+        background: rgba(255,255,255,0.98);
         border:1px solid #dbe5ef;
         border-radius:24px;
         box-shadow:0 18px 40px rgba(9,30,66,0.10);
@@ -241,6 +239,34 @@ def mostrar_login():
         padding-bottom:2px;
     }
 
+    .login-logo img{
+        display:block;
+        margin-left:auto;
+        margin-right:auto;
+    }
+
+    .login-floating-circle-1{
+        position: fixed;
+        right: 180px;
+        top: 80px;
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        border: 18px solid rgba(20,58,103,0.04);
+        pointer-events:none;
+    }
+
+    .login-floating-circle-2{
+        position: fixed;
+        left: 40px;
+        bottom: 20px;
+        width: 170px;
+        height: 170px;
+        border-radius: 50%;
+        border: 16px solid rgba(20,58,103,0.04);
+        pointer-events:none;
+    }
+
     div[data-testid="stTextInput"] label{
         font-weight:800 !important;
         color:#6a7788 !important;
@@ -267,40 +293,39 @@ def mostrar_login():
         box-shadow:none !important;
     }
 
-    .login-logo-wrap img{
-        display:block;
-        margin-left:auto;
-        margin-right:auto;
-    }
-
     @media (max-width: 1100px){
         .hero-title{
-            font-size:2.2rem;
+            font-size:2.25rem;
         }
-        .login-card-shell{
-            min-height: auto;
+        .right-panel-wrap{
+            min-height:auto;
             padding-top: 10px;
         }
     }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("""
-    <div class="login-topbar">
-        <div class="brand-row">
-            <div class="brand-left">
-                <div>
-                    <div class="brand-title">5S INOVA</div>
-                    <div class="brand-sub">Control logístico</div>
-                </div>
-            </div>
-            <div class="safe-pill">Acceso seguro</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="login-floating-circle-1"></div><div class="login-floating-circle-2"></div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
-    left, right = st.columns([1.45, 0.75], gap="large")
+    st.markdown('<div class="login-topbar">', unsafe_allow_html=True)
+    top_left, top_right = st.columns([1.2, 0.4], gap="small")
+
+    with top_left:
+        logo_col, text_col = st.columns([0.09, 0.91], gap="small")
+        with logo_col:
+            if os.path.exists(LOGO_INOVA):
+                st.image(LOGO_INOVA, width=44)
+        with text_col:
+            st.markdown('<div class="topbar-title">5S INOVA</div>', unsafe_allow_html=True)
+            st.markdown('<div class="topbar-sub">Control logístico</div>', unsafe_allow_html=True)
+
+    with top_right:
+        st.markdown('<div class="safe-pill">Acceso seguro</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="login-main-wrap">', unsafe_allow_html=True)
+    left, right = st.columns([1.65, 0.85], gap="large")
 
     with left:
         st.markdown('<div class="hero-badge">PLATAFORMA INTELIGENTE</div>', unsafe_allow_html=True)
@@ -319,18 +344,16 @@ def mostrar_login():
         """, unsafe_allow_html=True)
 
     with right:
-        st.markdown('<div class="login-card-shell"><div class="login-card">', unsafe_allow_html=True)
+        st.markdown('<div class="right-panel-wrap"><div class="login-card">', unsafe_allow_html=True)
         st.markdown('<div class="login-card-head">', unsafe_allow_html=True)
 
         if os.path.exists(LOGO_INOVA):
-            st.markdown('<div class="login-logo-wrap">', unsafe_allow_html=True)
+            st.markdown('<div class="login-logo">', unsafe_allow_html=True)
             st.image(LOGO_INOVA, width=70)
             st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown("""
-            <div class="login-card-title">Iniciar sesión</div>
-            <div class="login-card-sub">Ingrese sus credenciales para acceder al sistema.</div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="login-card-title">Iniciar sesión</div>', unsafe_allow_html=True)
+        st.markdown('<div class="login-card-sub">Ingrese sus credenciales para acceder al sistema.</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="login-card-body">', unsafe_allow_html=True)
@@ -346,10 +369,10 @@ def mostrar_login():
                 st.error("Usuario o contraseña incorrectos.")
 
         st.markdown("""
-            <div class="login-foot-note">
-                La sesión permanece activa mientras la pestaña o el navegador estén abiertos.
-            </div>
-            <div class="login-copy">INOVA © 2026 · Warehouse Management System</div>
+        <div class="login-foot-note">
+            La sesión permanece activa mientras la pestaña o el navegador estén abiertos. Al cerrarlos, se solicitará acceso nuevamente.
+        </div>
+        <div class="login-copy">INOVA © 2026 · Warehouse Management System</div>
         """, unsafe_allow_html=True)
         st.markdown('</div></div></div>', unsafe_allow_html=True)
 
