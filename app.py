@@ -90,6 +90,7 @@ def mostrar_login():
                 linear-gradient(90deg, rgba(20,58,103,0.045) 1px, transparent 1px),
                 linear-gradient(rgba(20,58,103,0.045) 1px, transparent 1px);
             background-size: auto, 56px 56px, 56px 56px;
+            overflow: hidden !important;
         }
 
         .block-container {
@@ -98,26 +99,8 @@ def mostrar_login():
             margin: 0 !important;
         }
 
-        .login-wrapper {
-            height: 100vh;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            padding-top: 40px;
-        }
-
-        .login-card {
-            width: 100%;
-            max-width: 420px;
-        }
-
-        div[data-testid="stForm"] {
-            background: rgba(255,255,255,0.97) !important;
-            border: 1px solid #dbe5ef !important;
-            border-radius: 24px !important;
-            box-shadow: 0 24px 55px rgba(8, 35, 70, 0.11) !important;
-            padding: 24px 22px 14px 22px !important;
-            margin: 0 !important;
+        .login-top-space {
+            height: 18px;
         }
 
         .login-card-title {
@@ -125,6 +108,8 @@ def mostrar_login():
             font-weight: 800;
             color: #133763;
             text-align: center;
+            margin-top: 4px;
+            margin-bottom: 2px;
         }
 
         .login-card-sub {
@@ -134,9 +119,32 @@ def mostrar_login():
             margin-bottom: 16px;
         }
 
+        div[data-testid="stForm"] {
+            background: rgba(255,255,255,0.98) !important;
+            border: 1px solid #dbe5ef !important;
+            border-radius: 24px !important;
+            box-shadow: 0 18px 40px rgba(8, 35, 70, 0.10) !important;
+            padding: 22px 22px 16px 22px !important;
+            margin: 0 !important;
+        }
+
+        div[data-testid="stForm"] > div {
+            border: none !important;
+        }
+
+        div[data-testid="stTextInput"] label {
+            font-weight: 800 !important;
+            color: #6a7788 !important;
+            font-size: 0.78rem !important;
+            letter-spacing: 0.3px;
+        }
+
         div[data-testid="stTextInput"] input {
             border-radius: 14px !important;
             min-height: 48px !important;
+            border: 1px solid #d0dce8 !important;
+            background: #ffffff !important;
+            box-shadow: none !important;
         }
 
         .stButton > button,
@@ -144,35 +152,39 @@ def mostrar_login():
             width:100%;
             min-height:48px !important;
             border-radius:14px !important;
+            border:none !important;
             background: linear-gradient(90deg, #1656c1 0%, #0b4fc4 100%) !important;
             color:white !important;
             font-weight:800 !important;
+        }
+
+        @media (max-width: 900px) {
+            html, body, [data-testid="stAppViewContainer"], .stApp {
+                overflow-y: auto !important;
+            }
         }
         </style>
         """,
         unsafe_allow_html=True
     )
 
-    st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
+    st.markdown('<div class="login-top-space"></div>', unsafe_allow_html=True)
 
-    with st.container():
-        st.markdown('<div class="login-card">', unsafe_allow_html=True)
+    left, center, right = st.columns([1.45, 0.7, 1.45], gap="small")
 
+    with center:
         with st.form("login_form", clear_on_submit=False):
             if os.path.exists(LOGO_INOVA):
-                c1, c2, c3 = st.columns([1,1,1])
+                c1, c2, c3 = st.columns([1, 1, 1])
                 with c2:
-                    st.image(LOGO_INOVA, width=70)
+                    st.image(LOGO_INOVA, width=68)
 
             st.markdown('<div class="login-card-title">Iniciar sesión</div>', unsafe_allow_html=True)
             st.markdown('<div class="login-card-sub">Ingrese sus credenciales</div>', unsafe_allow_html=True)
 
-            usuario = st.text_input("USUARIO").strip().upper()
-            clave = st.text_input("CONTRASEÑA", type="password")
-
+            usuario = st.text_input("USUARIO", placeholder="Ingrese su usuario").strip().upper()
+            clave = st.text_input("CONTRASEÑA", type="password", placeholder="Ingrese su contraseña")
             entrar = st.form_submit_button("ACCEDER", use_container_width=True)
-
-        st.markdown('</div>', unsafe_allow_html=True)
 
         if entrar:
             if usuario in USUARIOS_SISTEMA and USUARIOS_SISTEMA[usuario] == clave:
@@ -181,8 +193,6 @@ def mostrar_login():
                 st.rerun()
             else:
                 st.error("Usuario o contraseña incorrectos.")
-
-    st.markdown('</div>', unsafe_allow_html=True)
 
 
 # =========================================================
