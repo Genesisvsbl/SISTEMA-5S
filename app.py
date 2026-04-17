@@ -76,6 +76,8 @@ def mostrar_login():
     header {visibility:hidden;}
 
     html, body, [data-testid="stAppViewContainer"], .stApp {
+        height: 100vh !important;
+        overflow: hidden !important;
         background:
             linear-gradient(rgba(236,242,248,0.96), rgba(236,242,248,0.96)),
             linear-gradient(90deg, rgba(20,58,103,0.05) 1px, transparent 1px),
@@ -92,7 +94,8 @@ def mostrar_login():
         background: rgba(255,255,255,0.94);
         border-bottom: 1px solid #dbe5ef;
         padding: 10px 22px;
-        margin-bottom: 0;
+        height: 70px;
+        box-sizing: border-box;
     }
 
     .topbar-title{
@@ -119,21 +122,22 @@ def mostrar_login():
         border-radius:999px;
         font-size:0.82rem;
         font-weight:700;
-        margin-top:8px;
+        margin-top:6px;
         float:right;
     }
 
-    .login-main{
-        min-height: calc(100vh - 72px);
-        padding: 26px 26px 18px 26px;
+    .login-main-fixed{
         position: relative;
+        height: calc(100vh - 70px);
+        padding: 0 26px;
+        box-sizing: border-box;
         overflow: hidden;
     }
 
     .login-circle-top{
         position:absolute;
         right: 120px;
-        top: 24px;
+        top: 28px;
         width: 220px;
         height: 220px;
         border-radius: 50%;
@@ -150,10 +154,6 @@ def mostrar_login():
         border-radius: 50%;
         border: 14px solid rgba(20,58,103,0.04);
         pointer-events:none;
-    }
-
-    .login-spacer{
-        min-height: calc(100vh - 150px);
     }
 
     .login-card-title{
@@ -197,6 +197,7 @@ def mostrar_login():
         border-radius:24px !important;
         box-shadow:0 18px 40px rgba(9,30,66,0.10) !important;
         padding: 22px 22px 18px 22px !important;
+        margin-top: 90px !important;
     }
 
     div[data-testid="stForm"] > div{
@@ -231,12 +232,18 @@ def mostrar_login():
     }
 
     @media (max-width: 1100px){
-        .login-spacer{
-            min-height: 20px;
+        html, body, [data-testid="stAppViewContainer"], .stApp {
+            overflow-y: auto !important;
         }
-        .login-main{
-            min-height: auto;
-            padding-bottom: 28px;
+
+        .login-main-fixed{
+            height: auto;
+            min-height: calc(100vh - 70px);
+            padding-bottom: 24px;
+        }
+
+        div[data-testid="stForm"]{
+            margin-top: 20px !important;
         }
     }
     </style>
@@ -260,7 +267,7 @@ def mostrar_login():
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("""
-    <div class="login-main">
+    <div class="login-main-fixed">
         <div class="login-circle-top"></div>
         <div class="login-circle-bottom"></div>
     </div>
@@ -269,11 +276,9 @@ def mostrar_login():
     left, right = st.columns([1.55, 0.85], gap="large")
 
     with left:
-        st.markdown('<div class="login-spacer"></div>', unsafe_allow_html=True)
+        st.empty()
 
     with right:
-        st.markdown("<div style='height:90px;'></div>", unsafe_allow_html=True)
-
         with st.form("login_form", clear_on_submit=False):
             if os.path.exists(LOGO_INOVA):
                 c_logo_1, c_logo_2, c_logo_3 = st.columns([1, 1, 1])
@@ -302,6 +307,7 @@ def mostrar_login():
                 st.rerun()
             else:
                 st.error("Usuario o contraseña incorrectos.")
+
 # =========================================================
 # ESTILO UI WOW
 # =========================================================
