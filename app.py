@@ -101,8 +101,9 @@ def mostrar_login():
         .login-wrapper {
             height: 100vh;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
+            padding-top: 40px;
         }
 
         .login-card {
