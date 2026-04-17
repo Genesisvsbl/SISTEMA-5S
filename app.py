@@ -91,7 +91,8 @@ def mostrar_login():
     .login-topbar{
         background: rgba(255,255,255,0.94);
         border-bottom: 1px solid #dbe5ef;
-        padding: 12px 22px;
+        padding: 10px 22px;
+        margin-bottom: 0;
     }
 
     .topbar-title{
@@ -118,13 +119,13 @@ def mostrar_login():
         border-radius:999px;
         font-size:0.82rem;
         font-weight:700;
-        margin-top:6px;
+        margin-top:8px;
         float:right;
     }
 
-    .login-area{
-        min-height: calc(100vh - 68px);
-        padding: 24px 24px 20px 24px;
+    .login-main{
+        min-height: calc(100vh - 72px);
+        padding: 26px 26px 18px 26px;
         position: relative;
         overflow: hidden;
     }
@@ -132,7 +133,7 @@ def mostrar_login():
     .login-circle-top{
         position:absolute;
         right: 120px;
-        top: 18px;
+        top: 24px;
         width: 220px;
         height: 220px;
         border-radius: 50%;
@@ -143,7 +144,7 @@ def mostrar_login():
     .login-circle-bottom{
         position:absolute;
         left: 28px;
-        bottom: 18px;
+        bottom: 20px;
         width: 150px;
         height: 150px;
         border-radius: 50%;
@@ -151,44 +152,32 @@ def mostrar_login():
         pointer-events:none;
     }
 
-    .login-card-wrap{
-        min-height: calc(100vh - 120px);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-    }
-
-    .login-card{
-        width:100%;
-        max-width:430px;
-        background: rgba(255,255,255,0.98);
-        border:1px solid #dbe5ef;
-        border-radius:24px;
-        box-shadow:0 18px 40px rgba(9,30,66,0.10);
-        overflow:hidden;
-    }
-
-    .login-card-head{
-        padding:28px 28px 16px 28px;
-        text-align:center;
-        border-bottom:1px solid #e7eef5;
-        background:#ffffff;
+    .login-spacer{
+        min-height: calc(100vh - 150px);
     }
 
     .login-card-title{
-        font-size:2rem;
-        font-weight:800;
-        color:#133763;
-        margin-bottom:4px;
+        font-size: 2rem;
+        font-weight: 800;
+        color: #133763;
+        text-align: center;
+        margin-top: 6px;
+        margin-bottom: 2px;
     }
 
     .login-card-sub{
         color:#7a8796;
         font-size:0.9rem;
+        text-align:center;
+        margin-bottom: 18px;
     }
 
-    .login-card-body{
-        padding:22px 22px 18px 22px;
+    .login-copy{
+        text-align:center;
+        color:#7c8896;
+        font-size:0.74rem;
+        margin-top:14px;
+        font-weight:600;
     }
 
     .login-foot-note{
@@ -202,23 +191,16 @@ def mostrar_login():
         font-size:0.8rem;
     }
 
-    .login-copy{
-        text-align:center;
-        color:#7c8896;
-        font-size:0.74rem;
-        margin-top:14px;
-        font-weight:600;
-        padding-bottom:2px;
+    div[data-testid="stForm"]{
+        background: rgba(255,255,255,0.98) !important;
+        border:1px solid #dbe5ef !important;
+        border-radius:24px !important;
+        box-shadow:0 18px 40px rgba(9,30,66,0.10) !important;
+        padding: 22px 22px 18px 22px !important;
     }
 
-    .login-logo img{
-        display:block;
-        margin-left:auto;
-        margin-right:auto;
-    }
-
-    .login-left-placeholder{
-        min-height: calc(100vh - 120px);
+    div[data-testid="stForm"] > div{
+        border: none !important;
     }
 
     div[data-testid="stTextInput"] label{
@@ -235,7 +217,8 @@ def mostrar_login():
         background:#ffffff !important;
     }
 
-    .stButton > button{
+    .stButton > button,
+    div[data-testid="stFormSubmitButton"] > button{
         width:100%;
         min-height:48px !important;
         border-radius:14px !important;
@@ -248,13 +231,11 @@ def mostrar_login():
     }
 
     @media (max-width: 1100px){
-        .login-card-wrap,
-        .login-left-placeholder{
-            min-height:auto;
+        .login-spacer{
+            min-height: 20px;
         }
-
-        .login-area{
-            min-height:auto;
+        .login-main{
+            min-height: auto;
             padding-bottom: 28px;
         }
     }
@@ -278,48 +259,49 @@ def mostrar_login():
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="login-area"><div class="login-circle-top"></div><div class="login-circle-bottom"></div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="login-main">
+        <div class="login-circle-top"></div>
+        <div class="login-circle-bottom"></div>
+    </div>
+    """, unsafe_allow_html=True)
+
     left, right = st.columns([1.55, 0.85], gap="large")
 
     with left:
-        st.markdown('<div class="login-left-placeholder"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="login-spacer"></div>', unsafe_allow_html=True)
 
     with right:
-        st.markdown('<div class="login-card-wrap"><div class="login-card">', unsafe_allow_html=True)
-        st.markdown('<div class="login-card-head">', unsafe_allow_html=True)
+        st.markdown("<div style='height:90px;'></div>", unsafe_allow_html=True)
 
-        if os.path.exists(LOGO_INOVA):
-            st.markdown('<div class="login-logo">', unsafe_allow_html=True)
-            st.image(LOGO_INOVA, width=70)
-            st.markdown('</div>', unsafe_allow_html=True)
+        with st.form("login_form", clear_on_submit=False):
+            if os.path.exists(LOGO_INOVA):
+                c_logo_1, c_logo_2, c_logo_3 = st.columns([1, 1, 1])
+                with c_logo_2:
+                    st.image(LOGO_INOVA, width=78)
 
-        st.markdown('<div class="login-card-title">Iniciar sesión</div>', unsafe_allow_html=True)
-        st.markdown('<div class="login-card-sub">Ingrese sus credenciales para acceder al sistema.</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown('<div class="login-card-title">Iniciar sesión</div>', unsafe_allow_html=True)
+            st.markdown('<div class="login-card-sub">Ingrese sus credenciales para acceder al sistema.</div>', unsafe_allow_html=True)
 
-        st.markdown('<div class="login-card-body">', unsafe_allow_html=True)
-        usuario = st.text_input("USUARIO", placeholder="Ingrese su usuario").strip().upper()
-        clave = st.text_input("CONTRASEÑA", type="password", placeholder="Ingrese su contraseña")
+            usuario = st.text_input("USUARIO", placeholder="Ingrese su usuario").strip().upper()
+            clave = st.text_input("CONTRASEÑA", type="password", placeholder="Ingrese su contraseña")
 
-        if st.button("ACCEDER", use_container_width=True):
+            entrar = st.form_submit_button("ACCEDER", use_container_width=True)
+
+            st.markdown("""
+            <div class="login-foot-note">
+                La sesión permanece activa mientras la pestaña o el navegador estén abiertos.
+            </div>
+            <div class="login-copy">INOVA © 2026 · Warehouse Management System</div>
+            """, unsafe_allow_html=True)
+
+        if entrar:
             if usuario in USUARIOS_SISTEMA and USUARIOS_SISTEMA[usuario] == clave:
                 st.session_state.autenticado = True
                 st.session_state.usuario_actual = usuario
                 st.rerun()
             else:
                 st.error("Usuario o contraseña incorrectos.")
-
-        st.markdown("""
-        <div class="login-foot-note">
-            La sesión permanece activa mientras la pestaña o el navegador estén abiertos.
-        </div>
-        <div class="login-copy">INOVA © 2026 · Warehouse Management System</div>
-        """, unsafe_allow_html=True)
-
-        st.markdown('</div></div></div>', unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
 # =========================================================
 # ESTILO UI WOW
 # =========================================================
