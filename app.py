@@ -373,11 +373,10 @@ def mostrar_login():
                     <p class="hero-final">Es momento de evolucionar. Es momento de INOVA.</p>
                 </div>
             </div>
+            <div class="login-panel">
+                <div class="login-card">
+                    <div class="login-head">
     """, unsafe_allow_html=True)
-
-    st.markdown('<div class="login-panel">', unsafe_allow_html=True)
-    st.markdown('<div class="login-card">', unsafe_allow_html=True)
-    st.markdown('<div class="login-head">', unsafe_allow_html=True)
 
     if os.path.exists(LOGO_INOVA):
         st.markdown('<div class="login-logo">', unsafe_allow_html=True)
@@ -385,12 +384,11 @@ def mostrar_login():
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("""
-    <div class="login-title">Iniciar sesión</div>
-    <div class="login-subtitle">Ingrese sus credenciales para acceder al sistema.</div>
+                        <div class="login-title">Iniciar sesión</div>
+                        <div class="login-subtitle">Ingrese sus credenciales para acceder al sistema.</div>
+                    </div>
+                    <div class="login-body">
     """, unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('<div class="login-body">', unsafe_allow_html=True)
 
     usuario = st.text_input("USUARIO", placeholder="Ingrese su usuario").strip().upper()
     clave = st.text_input("CONTRASEÑA", type="password", placeholder="Ingrese su contraseña")
@@ -404,13 +402,16 @@ def mostrar_login():
             st.error("Usuario o contraseña incorrectos.")
 
     st.markdown("""
-        <div class="login-footer-box">
-            La sesión permanece activa mientras la pestaña o el navegador estén abiertos.
+                        <div class="login-footer-box">
+                            La sesión permanece activa mientras la pestaña o el navegador estén abiertos.
+                        </div>
+                        <div class="login-copy">INOVA © 2026 · Warehouse Management System</div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="login-copy">INOVA © 2026 · Warehouse Management System</div>
+    </div>
     """, unsafe_allow_html=True)
-
-    st.markdown('</div></div></div></div></div>', unsafe_allow_html=True)
 
 # =========================================================
 # ESTILO UI WOW
@@ -1218,7 +1219,6 @@ if st.sidebar.button("Eliminar inspecciones del día", use_container_width=True)
     else:
         st.sidebar.info(f"No había inspecciones para {fecha_txt}.")
 
-# Espaciador para bajar el bloque de sesión
 st.sidebar.markdown("<div style='height: 60px;'></div>", unsafe_allow_html=True)
 st.sidebar.markdown("---")
 st.sidebar.markdown(
