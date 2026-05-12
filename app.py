@@ -1,5 +1,19 @@
-# Código corregido para la vista de login y estructura general de la app 5S INOVA
-# Reemplaza tu archivo actual por este.
+"""
+Sistema 5S INOVA - Version PRO Ejecutiva
+Archivo: appi.py
+
+Incluye lo solicitado en el Word:
+- Programar auditoria 5S.
+- Meta por bodega >= 90%.
+- Promedio general >= 90%.
+- Responsables base: Darwin Herrera, Nelson Meza, Carlos Lugo, Aldair Montes.
+- Opcion de agregar nuevos responsables.
+- Cronograma visual tipo Gantt con eje X por fecha y etiqueta de responsable.
+- Checklist por bodega segun requerimientos.
+- Inspeccion con evidencia fotografica multiple.
+- Dashboard ejecutivo con KPIs, ranking, tendencia, semaforos y hallazgos.
+- Exportacion Excel, PDF y grafica del cronograma.
+"""
 
 import os
 import io
@@ -9,6 +23,7 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 import streamlit as st
 import plotly.express as px
+import plotly.graph_objects as go
 from PIL import Image
 
 from reportlab.lib import colors
@@ -17,19 +32,32 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    Image as RLImage, PageBreak
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    Table,
+    TableStyle,
+    Image as RLImage,
+    PageBreak,
 )
 
 # =========================================================
-# PATHS BASE
+# CONFIGURACION GENERAL
 # =========================================================
 LOGO_INOVA = "INOVA.png"
 LOGO_EASY = "FOND EASY.png"
 
-# =========================================================
-# CONFIG
-# =========================================================
+DATA_DIR = "data_5s"
+REPORTS_DIR = os.path.join(DATA_DIR, "reportes")
+EVIDENCE_DIR = os.path.join(DATA_DIR, "evidencias")
+DB_PATH = os.path.join(DATA_DIR, "inspecciones.json")
+SCHEDULE_PATH = os.path.join(DATA_DIR, "cronograma.json")
+RESPONSIBLES_PATH = os.path.join(DATA_DIR, "responsables.json")
+EXCEL_PATH = os.path.join(DATA_DIR, "historico_5s.xlsx")
+
+for folder in [DATA_DIR, REPORTS_DIR, EVIDENCE_DIR]:
+    os.makedirs(folder, exist_ok=True)
+
 if os.path.exists(LOGO_INOVA):
     try:
         logo_icon = Image.open(LOGO_INOVA)
@@ -39,425 +67,387 @@ else:
     logo_icon = "📦"
 
 st.set_page_config(
-    page_title="5S INOVA",
+    page_title="5S INOVA PRO",
     page_icon=logo_icon,
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
-DATA_DIR = "data_5s"
-REPORTS_DIR = os.path.join(DATA_DIR, "reportes")
-EVIDENCE_DIR = os.path.join(DATA_DIR, "evidencias")
-DB_PATH = os.path.join(DATA_DIR, "inspecciones.json")
-SCHEDULE_PATH = os.path.join(DATA_DIR, "cronograma.json")
-EXCEL_PATH = os.path.join(DATA_DIR, "historico_5s.xlsx")
-
-os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(REPORTS_DIR, exist_ok=True)
-os.makedirs(EVIDENCE_DIR, exist_ok=True)
-
 # =========================================================
-# LOGIN
+# CONSTANTES DE NEGOCIO
 # =========================================================
+META_BODEGA = 90.0
+META_GENERAL = 90.0
+
 USUARIOS_SISTEMA = {
     "DHERRERA": "1397",
-    "GVISBAL": "0768"
+    "GVISBAL": "0768",
 }
 
+RESPONSABLES_DEFAULT = [
+    {
+        "id": "darwin_herrera",
+        "nombre": "Darwin Herrera",
+        "cargo": "Responsable 5S",
+        "area": "Operaciones",
+        "color": "#156CC1",
+        "activo": True,
+    },
+    {
+        "id": "nelson_meza",
+        "nombre": "Nelson Meza",
+        "cargo": "Responsable 5S",
+        "area": "Operaciones",
+        "color": "#13A35B",
+        "activo": True,
+    },
+    {
+        "id": "carlos_lugo",
+        "nombre": "Carlos Lugo",
+        "cargo": "Responsable 5S",
+        "area": "Operaciones",
+        "color": "#FF8A00",
+        "activo": True,
+    },
+    {
+        "id": "aldair_montes",
+        "nombre": "Aldair Montes",
+        "cargo": "Responsable 5S",
+        "area": "Operaciones",
+        "color": "#7C3AED",
+        "activo": True,
+    },
+]
 
-def init_login():
-    if "autenticado" not in st.session_state:
-        st.session_state.autenticado = False
-    if "usuario_actual" not in st.session_state:
-        st.session_state.usuario_actual = ""
+BODEGA_COLORS = {
+    "Bodega General": "#156CC1",
+    "Bodega Tierras": "#7EC0EE",
+    "Bodega Preforma": "#76E09B",
+    "Bodega Químico": "#E24B4B",
+    "Bodega Cuarto Frío": "#5DADEC",
+    "Bodega Cuarto Atemperado": "#2BB3A3",
+}
 
+# Checklists cargados desde el Word del usuario.
+BODEGAS = {
+    "Bodega General": [
+        "Limpieza pisos pasillos (pasillo 1-2, zonas de tránsito)",
+        "Limpieza pisos naves de almacenamiento (Lata y zona de alistamiento)",
+        "Limpieza pisos zona de revisión y ETO",
+        "Limpieza pisos oficina administrativa",
+        "Limpieza pisos muelles de descargue",
+        "Limpieza patio 1, línea de vida y muelles",
+        "Limpieza piso zona de parqueo equipos eléctricos",
+        "Limpieza estaciones de aseo (Bodega general y patio)",
+        "Limpieza de estanterías pasillo 1-2 y estantería azúcar (polvo, suciedad, telarañas, etc.)",
+        "Limpieza de materiales (cambio de pelex y retiro de polvo)",
+        "Almacenamiento de materiales cumpliendo layout",
+        "Limpieza herramientas manuales y ubicados en su layout",
+        "Orden y aseo gabinetes (gabinete implementos 5S y gabinete oficina administrativa)",
+        "Validación estibas en buen estado (0 estibas partidas)",
+    ],
+    "Bodega Tierras": [
+        "Limpieza pisos zona de tránsito y muelle de descargue",
+        "Limpieza pisos naves de almacenamiento",
+        "Limpieza de estanterías (polvo, suciedad, telarañas, etc.)",
+        "Limpieza de materiales (cambio de pelex y retiro de polvo)",
+        "Limpieza herramientas 5S y portón muelle descargue",
+        "Almacenamiento de materiales cumpliendo layout",
+        "Limpieza herramientas manuales y ubicados en su layout",
+        "Muelle de descargue libre de estibas",
+        "Limpieza rampa zona externa de la bodega",
+        "Cumplimiento patrón de estibado de materiales",
+        "Validación estibas en buen estado (0 estibas partidas)",
+    ],
+    "Bodega Preforma": [
+        "Limpieza pisos zona de tránsito y muelle de descargue",
+        "Limpieza pisos naves de almacenamiento",
+        "Limpieza de estanterías (polvo, suciedad, telarañas, etc.)",
+        "Limpieza de materiales (cambio de pelex y retiro de polvo)",
+        "Limpieza muelle de preforma y zona detrás buffer de lata",
+        "Almacenamiento de materiales cumpliendo layout",
+        "Bodega y muelle de descargue libre de estibas",
+        "Validación estibas en buen estado (0 estibas partidas)",
+    ],
+    "Bodega Químico": [
+        "Limpieza de pisos pasillo externo bodega y muelle de descargue",
+        "Limpieza de rampa",
+        "Limpieza de pisos pasillos (pasillo 1-2-3)",
+        "Limpieza de estanterías (polvo, suciedad, telarañas, etc.)",
+        "Limpieza de materiales (cambio de pelex y retiro de polvo)",
+        "Limpieza gabinete EPPS",
+        "Limpieza herramientas manuales y ubicados en su layout",
+        "Almacenamiento de materiales cumpliendo layout",
+        "Validación estibas en buen estado (0 estibas partidas)",
+        "Cumplimiento compatibilidad SQ almacenamiento",
+        "Limpieza de estibas plásticas rojas fuera de bodega",
+    ],
+    "Bodega Cuarto Frío": [
+        "Limpiezas pisos pasillo externo bodega",
+        "Limpieza zona de almacenamiento color caramelo",
+        "Limpieza pisos bodega",
+        "Limpieza de estanterías (polvo, suciedad, telarañas, etc.)",
+        "Limpieza de materiales (cambio de pelex y retiro de polvo)",
+        "Almacenamiento de materiales cumpliendo layout",
+        "Validación estibas en buen estado (0 estibas partidas)",
+        "Validación de control temperatura dentro de parámetro",
+    ],
+    "Bodega Cuarto Atemperado": [
+        "Limpiezas pisos pasillo externo bodega",
+        "Limpieza pisos bodega",
+        "Limpieza de estanterías (polvo, suciedad, telarañas, etc.)",
+        "Limpieza de materiales (cambio de pelex y retiro de polvo)",
+        "Almacenamiento de materiales cumpliendo layout",
+        "Validación estibas en buen estado (0 estibas partidas)",
+        "Validación de control temperatura dentro de parámetro",
+    ],
+}
 
-def mostrar_login():
-    st.markdown(
-        """
-        <style>
-        [data-testid="stSidebar"] {display:none !important;}
-        #MainMenu {visibility:hidden;}
-        footer {visibility:hidden;}
-        header {visibility:hidden;}
-
-        html, body, [data-testid="stAppViewContainer"], .stApp {
-            margin: 0 !important;
-            padding: 0 !important;
-            min-height: 100vh !important;
-            background:
-                linear-gradient(rgba(236,242,248,0.98), rgba(236,242,248,0.98)),
-                linear-gradient(90deg, rgba(20,58,103,0.045) 1px, transparent 1px),
-                linear-gradient(rgba(20,58,103,0.045) 1px, transparent 1px);
-            background-size: auto, 56px 56px, 56px 56px;
-            overflow: hidden !important;
-        }
-
-        .block-container {
-            max-width: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-
-        .login-top-space {
-            height: 18px;
-        }
-
-        .login-card-title {
-            font-size: 2rem;
-            font-weight: 800;
-            color: #133763;
-            text-align: center;
-            margin-top: 4px;
-            margin-bottom: 2px;
-        }
-
-        .login-card-sub {
-            color: #7a8796;
-            font-size: 0.9rem;
-            text-align: center;
-            margin-bottom: 16px;
-        }
-
-        div[data-testid="stForm"] {
-            background: rgba(255,255,255,0.98) !important;
-            border: 1px solid #dbe5ef !important;
-            border-radius: 24px !important;
-            box-shadow: 0 18px 40px rgba(8, 35, 70, 0.10) !important;
-            padding: 22px 22px 16px 22px !important;
-            margin: 0 !important;
-        }
-
-        div[data-testid="stForm"] > div {
-            border: none !important;
-        }
-
-        div[data-testid="stTextInput"] label {
-            font-weight: 800 !important;
-            color: #6a7788 !important;
-            font-size: 0.78rem !important;
-            letter-spacing: 0.3px;
-        }
-
-        div[data-testid="stTextInput"] input {
-            border-radius: 14px !important;
-            min-height: 48px !important;
-            border: 1px solid #d0dce8 !important;
-            background: #ffffff !important;
-            box-shadow: none !important;
-        }
-
-        .stButton > button,
-        div[data-testid="stFormSubmitButton"] > button {
-            width:100%;
-            min-height:48px !important;
-            border-radius:14px !important;
-            border:none !important;
-            background: linear-gradient(90deg, #1656c1 0%, #0b4fc4 100%) !important;
-            color:white !important;
-            font-weight:800 !important;
-        }
-
-        @media (max-width: 900px) {
-            html, body, [data-testid="stAppViewContainer"], .stApp {
-                overflow-y: auto !important;
-            }
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.markdown('<div class="login-top-space"></div>', unsafe_allow_html=True)
-
-    left, center, right = st.columns([1.45, 0.7, 1.45], gap="small")
-
-    with center:
-        with st.form("login_form", clear_on_submit=False):
-            if os.path.exists(LOGO_INOVA):
-                c1, c2, c3 = st.columns([1, 1, 1])
-                with c2:
-                    st.image(LOGO_INOVA, width=68)
-
-            st.markdown('<div class="login-card-title">Iniciar sesión</div>', unsafe_allow_html=True)
-            st.markdown('<div class="login-card-sub">Ingrese sus credenciales</div>', unsafe_allow_html=True)
-
-            usuario = st.text_input("USUARIO", placeholder="Ingrese su usuario").strip().upper()
-            clave = st.text_input("CONTRASEÑA", type="password", placeholder="Ingrese su contraseña")
-            entrar = st.form_submit_button("ACCEDER", use_container_width=True)
-
-        if entrar:
-            if usuario in USUARIOS_SISTEMA and USUARIOS_SISTEMA[usuario] == clave:
-                st.session_state.autenticado = True
-                st.session_state.usuario_actual = usuario
-                st.rerun()
-            else:
-                st.error("Usuario o contraseña incorrectos.")
-
+ESTADOS_CRONOGRAMA = ["Programada", "En ejecución", "Finalizada", "Vencida", "Crítica"]
 
 # =========================================================
-# ESTILO UI GENERAL
+# CSS NIVEL PRO
 # =========================================================
-st.markdown("""
+st.markdown(
+    """
 <style>
 :root{
     --azul:#061f45;
     --azul2:#082b5c;
     --azul3:#0d3b73;
-    --fondo:#f3f7fb;
+    --fondo:#edf3f9;
+    --panel:#ffffff;
     --borde:#d7e3ef;
     --texto:#1f2937;
+    --muted:#667085;
     --verde:#13a35b;
     --amarillo:#d99b00;
     --rojo:#d53333;
+    --shadow:0 18px 42px rgba(8,32,68,0.08);
 }
 
 html, body, [class*="css"] {
-    font-family: "Segoe UI", sans-serif;
+    font-family: "Segoe UI", Inter, Arial, sans-serif;
 }
 
-body {
-    color: var(--texto);
+.stApp{
+    background:
+        radial-gradient(circle at 12% 10%, rgba(21,108,193,0.14), transparent 24%),
+        radial-gradient(circle at 90% 0%, rgba(6,31,69,0.12), transparent 22%),
+        linear-gradient(180deg, #f6f9fc 0%, #edf3f9 100%);
 }
 
 .block-container{
-    padding-top: 0.7rem;
-    padding-bottom: 1rem;
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
     max-width: 100% !important;
+    padding: 0.75rem 1.25rem 2rem 1.25rem;
 }
 
 section[data-testid="stSidebar"]{
-    background: linear-gradient(180deg, #f7fafe 0%, #eef4fb 100%);
-    border-right: 1px solid #d7e3ef;
+    background: linear-gradient(180deg, #061f45 0%, #082b5c 100%);
+    border-right: 1px solid rgba(255,255,255,0.08);
+}
+
+section[data-testid="stSidebar"] *{
+    color: white !important;
+}
+
+section[data-testid="stSidebar"] .stButton > button{
+    background: rgba(255,255,255,0.10) !important;
+    color: white !important;
+    border: 1px solid rgba(255,255,255,0.18) !important;
+}
+
+[data-testid="stSidebar"] input,
+[data-testid="stSidebar"] select,
+[data-testid="stSidebar"] textarea{
+    color:#061f45 !important;
 }
 
 .top-shell{
-    background: white;
-    border: 1px solid #dbe6f1;
-    border-radius: 24px;
+    background: rgba(255,255,255,0.86);
+    border: 1px solid rgba(215,227,239,0.95);
+    border-radius: 28px;
     padding: 16px 18px;
-    box-shadow: 0 10px 26px rgba(11, 37, 71, 0.06);
-    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
 }
 
 .top-banner{
-    background: linear-gradient(135deg, #061f45 0%, #0d3b73 55%, #174f95 100%);
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 95% 10%, rgba(255,255,255,0.20), transparent 18%),
+        linear-gradient(135deg, #061f45 0%, #0d3b73 54%, #156cc1 100%);
     color: white;
-    border-radius: 20px;
+    border-radius: 24px;
     padding: 22px 28px;
-    min-height: 110px;
+    min-height: 126px;
     display: flex;
     align-items: center;
-    box-shadow: 0 14px 30px rgba(6,31,69,0.22);
+    justify-content: space-between;
+    box-shadow: 0 18px 36px rgba(6,31,69,0.28);
 }
 
 .top-title{
-    font-size: 2.05rem;
-    font-weight: 800;
-    line-height: 1.1;
-    margin-bottom: 6px;
+    font-size: 2.15rem;
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    margin-bottom: 7px;
 }
 
 .top-subtitle{
-    font-size: 0.96rem;
+    font-size: 0.98rem;
     color: #dce8f8;
+    max-width: 900px;
+}
+
+.header-badge{
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.20);
+    color: white;
+    font-weight: 800;
+    white-space: nowrap;
 }
 
 .main-wrap{
-    background: linear-gradient(180deg, #fbfdff 0%, #f4f8fc 100%);
-    border: 1px solid #dce7f1;
-    border-radius: 24px;
-    padding: 20px 22px;
-    box-shadow: 0 10px 24px rgba(14, 30, 52, 0.05);
-    margin-bottom: 16px;
+    background: rgba(255,255,255,0.86);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(215,227,239,0.98);
+    border-radius: 28px;
+    padding: 22px;
+    box-shadow: var(--shadow);
+    margin-bottom: 18px;
 }
 
 .section-title{
-    color: #082b5c;
-    font-size: 1.22rem;
-    font-weight: 800;
-    margin-bottom: 12px;
+    color: #061f45;
+    font-size: 1.38rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+}
+
+.section-subtitle{
+    color:#667085;
+    margin-bottom: 18px;
+    font-size: 0.96rem;
 }
 
 .kpi-card{
-    background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+    background:
+        radial-gradient(circle at top right, rgba(21,108,193,0.08), transparent 30%),
+        linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
     border: 1px solid #dbe6f1;
-    border-radius: 18px;
-    padding: 18px;
-    min-height: 115px;
-    box-shadow: 0 8px 18px rgba(8, 32, 68, 0.04);
+    border-radius: 22px;
+    padding: 20px;
+    min-height: 124px;
+    box-shadow: 0 12px 30px rgba(8,32,68,0.07);
 }
 
 .kpi-label{
     color: #667085;
-    font-size: 0.92rem;
+    font-size: 0.78rem;
     margin-bottom: 8px;
-    font-weight: 700;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .kpi-value{
     color: #061f45;
-    font-size: 2rem;
-    font-weight: 800;
+    font-size: 2.15rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.kpi-note{
+    margin-top: 8px;
+    color:#667085;
+    font-size:0.88rem;
+}
+
+.exec-card{
+    background:white;
+    border:1px solid #dbe6f1;
+    border-radius:22px;
+    padding:18px;
+    box-shadow:0 10px 26px rgba(8,32,68,0.06);
+    margin-bottom:14px;
 }
 
 .ins-card{
     background: white;
     border: 1px solid #d9e6f2;
-    border-radius: 18px;
+    border-radius: 20px;
     padding: 16px 16px 10px 16px;
-    box-shadow: 0 6px 16px rgba(8, 32, 68, 0.04);
+    box-shadow: 0 8px 22px rgba(8, 32, 68, 0.055);
     margin-bottom: 14px;
 }
 
 .punto-title{
-    font-size: 1rem;
-    font-weight: 800;
+    font-size: 1.02rem;
+    font-weight: 900;
     color: #082b5c;
     margin-bottom: 8px;
 }
 
 .punto-sub{
-    color: #4b5563;
+    color: #344054;
     font-size: 0.95rem;
-    line-height: 1.35;
+    line-height: 1.38;
 }
 
-.badge-green, .badge-yellow, .badge-red{
-    display:inline-block;
-    padding:6px 12px;
+.badge-green, .badge-yellow, .badge-red, .badge-blue, .badge-gray{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:7px 13px;
     border-radius:999px;
-    font-weight:800;
-    font-size:0.9rem;
+    font-weight:900;
+    font-size:0.86rem;
+    letter-spacing:0.02em;
 }
 .badge-green{background:#e9f8ef;color:#118a4c;border:1px solid #bfe9ce;}
 .badge-yellow{background:#fff7df;color:#9b7400;border:1px solid #ecd995;}
 .badge-red{background:#fdecec;color:#bf2525;border:1px solid #efbbbb;}
+.badge-blue{background:#eef5ff;color:#155bb5;border:1px solid #c9dcff;}
+.badge-gray{background:#eef2f6;color:#475467;border:1px solid #d0d5dd;}
 
-.stButton > button{
-    border-radius: 14px !important;
+.stButton > button,
+div[data-testid="stDownloadButton"] > button,
+div[data-testid="stFormSubmitButton"] > button{
+    border-radius: 15px !important;
     min-height: 46px !important;
+    font-weight: 900 !important;
     border: 1px solid #c8d8e8 !important;
     background: linear-gradient(180deg, #ffffff 0%, #f4f8fd 100%) !important;
     color: #082b5c !important;
-    font-weight: 800 !important;
 }
 
-div[data-testid="stDownloadButton"] > button{
-    border-radius: 14px !important;
-    min-height: 46px !important;
-    font-weight: 800 !important;
+button[kind="primary"], .stButton > button[kind="primary"]{
+    background: linear-gradient(135deg, #156cc1 0%, #0b4fc4 100%) !important;
+    color: white !important;
+    border: none !important;
 }
 
-div[data-testid="stExpander"]{
-    border-radius: 16px !important;
-    overflow: hidden;
+[data-testid="stMetricValue"]{
+    color:#061f45;
+    font-weight:900;
 }
 
 hr{
     border: none;
     border-top: 1px solid #e3edf6;
-    margin: 14px 0;
+    margin: 16px 0;
 }
 </style>
-""", unsafe_allow_html=True)
-
-# =========================================================
-# DATA
-# =========================================================
-BODEGAS = {
-    "Bodega General": [
-        "Limpieza pisos pasillos (Pasillo 1, 2, zonas de tránsito)",
-        "Limpieza pisos naves de almacenamiento lata y zona alistamiento",
-        "Limpieza pisos zona de revisión",
-        "Limpieza pisos ETO",
-        "Limpieza pisos oficina administrativa",
-        "Limpieza pisos muelle de descargue",
-        "Limpieza patio 1 y línea de vida",
-        "Limpieza estaciones de aseo bodega y patio",
-        "Limpieza de estanterías (Pasillo 1, pasillo 2, estantería azúcar)",
-        "Limpieza de materiales (Cambio de pelex y retiro de polvo)",
-        "Almacenamiento de materiales por fuera de layout designado",
-        "Limpieza herramientas manuales y ubicación en layout designado",
-        "Limpieza gabinetes (Implementos 5S e implementos oficina administrativa)",
-        "Limpieza equipos de cómputo oficina administrativa",
-        "Validación identificación materiales"
-    ],
-    "Bodega Tierras": [
-        "Limpieza pisos zona de tránsito y muelle descargue",
-        "Limpieza pisos almacenamiento a piso",
-        "Limpieza de estanterías (Polvo, telarañas)",
-        "Limpieza de materiales (Cambio de pelex y retiro de polvo)",
-        "Limpieza herramientas 5S y portón muelle descargue",
-        "Almacenamiento de materiales cumpliendo layout designado",
-        "Limpieza herramientas manuales y ubicación en layout designado",
-        "Muelle de descargue libre de estibas",
-        "Limpieza rampa ubicación externa de bodega",
-        "Cumplimiento patrón de estibado de materiales",
-        "Validación estibas en buen estado",
-        "Validación identificación materiales"
-    ],
-    "Bodega Preforma": [
-        "Limpieza pisos zona de tránsito y muelle descargue",
-        "Limpieza pisos almacenamiento a piso",
-        "Limpieza de estanterías (Polvo, telarañas)",
-        "Limpieza de materiales (Cambio de pelex y retiro de polvo)",
-        "Limpieza herramientas 5S y portón muelle descargue",
-        "Almacenamiento de materiales cumpliendo layout designado",
-        "Limpieza herramientas manuales y ubicación en layout designado",
-        "Muelle de descargue libre de estibas",
-        "Limpieza rampa ubicación externa de bodega",
-        "Cumplimiento patrón de estibado de materiales",
-        "Validación estibas en buen estado",
-        "Validación identificación materiales"
-    ],
-    "Bodega Químico": [
-        "Limpieza pisos zona de tránsito y muelle descargue",
-        "Limpieza pisos pasillos (Pasillo 1, Pasillo 2, Pasillo 3)",
-        "Limpieza pasillo externo de bodega",
-        "Limpieza de estanterías (Polvo, telarañas)",
-        "Limpieza de materiales (Cambio de pelex y retiro de polvo)",
-        "Limpieza gabinetes (EPPs)",
-        "Limpieza herramientas manuales y ubicación en layout designado",
-        "Almacenamiento de materiales cumpliendo layout designado",
-        "Cumplimiento patrón de estibado de materiales",
-        "Validación estibas en buen estado",
-        "Cumplimiento compatibilidad SQ almacenamiento",
-        "Validación identificación materiales"
-    ],
-    "Bodega Cuarto Frío": [
-        "Limpieza pisos almacenamiento a piso (color caramelo)",
-        "Limpieza pisos bodega",
-        "Limpieza pasillo externo de bodega",
-        "Limpieza de estanterías (Polvo, telarañas)",
-        "Limpieza de materiales (Cambio de pelex y retiro de polvo)",
-        "Almacenamiento de materiales cumpliendo layout designado",
-        "Cumplimiento patrón de estibado de materiales",
-        "Validación estibas en buen estado",
-        "Validación identificación materiales"
-    ],
-    "Bodega Cuarto Atemparado": [
-        "Limpieza pisos bodega",
-        "Limpieza pasillo externo de bodega",
-        "Limpieza de estanterías (Polvo, telarañas)",
-        "Limpieza de materiales (Cambio de pelex y retiro de polvo)",
-        "Almacenamiento de materiales cumpliendo layout designado",
-        "Cumplimiento patrón de estibado de materiales",
-        "Validación estibas en buen estado",
-        "Validación identificación materiales"
-    ],
-    "Bodega Alterna": [
-        "Limpieza pasillos (Pasillo 1, Pasillo 2)",
-        "Limpieza jaula de almacenamiento gases comprimidos",
-        "Limpieza de estanterías (Polvo, telarañas)",
-        "Limpieza de materiales (Cambio de pelex y retiro de polvo)",
-        "Almacenamiento de materiales cumpliendo layout designado",
-        "Validación estibas en buen estado",
-        "Validación identificación materiales"
-    ]
-}
+""",
+    unsafe_allow_html=True,
+)
 
 # =========================================================
 # HELPERS
@@ -475,6 +465,78 @@ def safe_load_json(path, default):
 def safe_save_json(path, data):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def slugify(value):
+    text = str(value or "").strip().lower()
+    replacements = {
+        "á": "a",
+        "é": "e",
+        "í": "i",
+        "ó": "o",
+        "ú": "u",
+        "ñ": "n",
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    return "_".join(text.split()) or datetime.now().strftime("item_%Y%m%d_%H%M%S")
+
+
+def get_responsables_activos():
+    return [r for r in st.session_state.responsables if r.get("activo", True)]
+
+
+def get_responsable_color(nombre):
+    for r in st.session_state.responsables:
+        if r.get("nombre") == nombre:
+            return r.get("color", "#156CC1")
+    return "#156CC1"
+
+
+def get_week_label(fecha_ref=None):
+    if fecha_ref is None:
+        fecha_ref = datetime.today()
+    year, week_num, _ = fecha_ref.isocalendar()
+    return f"Semana_{week_num:02d}_{year}"
+
+
+def cumplimiento_texto(valor):
+    if valor >= META_BODEGA:
+        return "Excelente"
+    if valor >= 75:
+        return "Atención"
+    return "Crítico"
+
+
+def cumplimiento_badge(valor):
+    if valor >= META_BODEGA:
+        return '<span class="badge-green">🟢 Excelente</span>'
+    if valor >= 75:
+        return '<span class="badge-yellow">🟡 Atención</span>'
+    return '<span class="badge-red">🔴 Crítico</span>'
+
+
+def estado_badge(estado):
+    if estado == "Finalizada":
+        return '<span class="badge-green">Finalizada</span>'
+    if estado == "En ejecución":
+        return '<span class="badge-yellow">En ejecución</span>'
+    if estado == "Crítica":
+        return '<span class="badge-red">Crítica</span>'
+    if estado == "Vencida":
+        return '<span class="badge-gray">Vencida</span>'
+    return '<span class="badge-blue">Programada</span>'
+
+
+def infer_schedule_status(item):
+    status = item.get("estado", "Programada")
+    try:
+        fecha_fin = pd.to_datetime(item.get("fecha_fin")).date()
+        if status == "Programada" and fecha_fin < date.today():
+            return "Vencida"
+    except Exception:
+        pass
+    return status
 
 
 def save_uploaded_image(uploaded_file, folder, file_prefix):
@@ -512,35 +574,14 @@ def fit_image_box(path, max_w_px=900, max_h_px=520):
         return 800, 450
 
 
-def cumplimiento_texto(valor):
-    if valor >= 90:
-        return "Excelente"
-    elif valor >= 75:
-        return "Aceptable / Atención"
-    return "Crítico"
-
-
-def cumplimiento_badge(valor):
-    if valor >= 90:
-        return '<span class="badge-green">🟢 Excelente</span>'
-    elif valor >= 75:
-        return '<span class="badge-yellow">🟡 Atención</span>'
-    return '<span class="badge-red">🔴 Crítico</span>'
-
-
-def get_week_label(fecha_ref=None):
-    if fecha_ref is None:
-        fecha_ref = datetime.today()
-    year, week_num, _ = fecha_ref.isocalendar()
-    return f"Semana_{week_num:02d}_{year}"
-
-
 def normalizar_items_legacy(items):
     normalizados = []
-    for item in items:
+    for item in items or []:
         if "fotos" not in item:
             foto_unica = item.get("foto")
             item["fotos"] = [foto_unica] if foto_unica else []
+        if "severidad" not in item:
+            item["severidad"] = "Media" if not item.get("cumple") else "Sin novedad"
         normalizados.append(item)
     return normalizados
 
@@ -549,24 +590,26 @@ def append_to_excel(registro):
     rows = []
     for item in registro["items"]:
         fotos = item.get("fotos", [])
-        if not fotos and item.get("foto"):
-            fotos = [item.get("foto")]
-
-        rows.append({
-            "Fecha": registro["fecha"],
-            "Responsable": registro["responsable"],
-            "Bodega": registro["bodega"],
-            "Área": registro["area"],
-            "Punto": item["punto"],
-            "Cumple": "Sí" if item["cumple"] else "No",
-            "Observación": item["observacion"],
-            "Fotos": " | ".join(fotos) if fotos else "",
-            "Cantidad fotos": len(fotos),
-            "Cumplimiento Total %": registro["cumplimiento"]
-        })
+        rows.append(
+            {
+                "Fecha": registro["fecha"],
+                "Semana": registro.get("semana", ""),
+                "Responsable": registro["responsable"],
+                "Bodega": registro["bodega"],
+                "Area": registro["area"],
+                "Punto": item["punto"],
+                "Cumple": "Si" if item["cumple"] else "No",
+                "Severidad": item.get("severidad", ""),
+                "Observacion": item.get("observacion", ""),
+                "Fotos": " | ".join(fotos) if fotos else "",
+                "Cantidad fotos": len(fotos),
+                "Cumplimiento Total %": registro["cumplimiento"],
+                "Meta Bodega %": META_BODEGA,
+                "Estado": cumplimiento_texto(registro["cumplimiento"]),
+            }
+        )
 
     df_new = pd.DataFrame(rows)
-
     if os.path.exists(EXCEL_PATH):
         try:
             df_old = pd.read_excel(EXCEL_PATH)
@@ -578,53 +621,322 @@ def append_to_excel(registro):
 
     with pd.ExcelWriter(EXCEL_PATH, engine="openpyxl") as writer:
         df_all.to_excel(writer, index=False, sheet_name="Historico")
-
     return EXCEL_PATH
 
 
 def rebuild_excel_from_inspections(inspecciones):
     rows = []
     for registro in inspecciones:
-        items = normalizar_items_legacy(registro.get("items", []))
-        for item in items:
-            fotos = item.get("fotos", [])
-            if not fotos and item.get("foto"):
-                fotos = [item.get("foto")]
-
-            rows.append({
-                "Fecha": registro["fecha"],
-                "Responsable": registro["responsable"],
-                "Bodega": registro["bodega"],
-                "Área": registro["area"],
-                "Punto": item["punto"],
-                "Cumple": "Sí" if item["cumple"] else "No",
-                "Observación": item["observacion"],
-                "Fotos": " | ".join(fotos) if fotos else "",
-                "Cantidad fotos": len(fotos),
-                "Cumplimiento Total %": registro["cumplimiento"]
-            })
-
+        for item in normalizar_items_legacy(registro.get("items", [])):
+            rows.append(
+                {
+                    "Fecha": registro.get("fecha"),
+                    "Semana": registro.get("semana", ""),
+                    "Responsable": registro.get("responsable"),
+                    "Bodega": registro.get("bodega"),
+                    "Area": registro.get("area"),
+                    "Punto": item.get("punto"),
+                    "Cumple": "Si" if item.get("cumple") else "No",
+                    "Severidad": item.get("severidad", ""),
+                    "Observacion": item.get("observacion", ""),
+                    "Fotos": " | ".join(item.get("fotos", [])),
+                    "Cantidad fotos": len(item.get("fotos", [])),
+                    "Cumplimiento Total %": registro.get("cumplimiento", 0),
+                    "Meta Bodega %": META_BODEGA,
+                    "Estado": cumplimiento_texto(float(registro.get("cumplimiento", 0))),
+                }
+            )
     if rows:
-        df = pd.DataFrame(rows)
         with pd.ExcelWriter(EXCEL_PATH, engine="openpyxl") as writer:
-            df.to_excel(writer, index=False, sheet_name="Historico")
-    else:
-        if os.path.exists(EXCEL_PATH):
-            try:
-                os.remove(EXCEL_PATH)
-            except Exception:
-                pass
+            pd.DataFrame(rows).to_excel(writer, index=False, sheet_name="Historico")
+    elif os.path.exists(EXCEL_PATH):
+        os.remove(EXCEL_PATH)
 
 
-def export_cronograma_excel(df_crono):
-    semana = get_week_label()
-    filename = f"Cronograma_{semana}.xlsx"
-
+def export_dataframe_excel(df, sheet_name="Datos"):
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-        df_crono.to_excel(writer, index=False, sheet_name="Cronograma")
+        df.to_excel(writer, index=False, sheet_name=sheet_name)
     buffer.seek(0)
+    return buffer
 
+
+def build_inspection_dataframe(inspecciones):
+    rows = []
+    for reg in inspecciones:
+        items = normalizar_items_legacy(reg.get("items", []))
+        total = len(items)
+        no_conformes = sum(1 for x in items if not x.get("cumple"))
+        observaciones = sum(1 for x in items if str(x.get("observacion", "")).strip())
+        rows.append(
+            {
+                "Fecha": pd.to_datetime(reg.get("fecha")),
+                "Responsable": reg.get("responsable", ""),
+                "Bodega": reg.get("bodega", ""),
+                "Cumplimiento": float(reg.get("cumplimiento", 0)),
+                "Meta": META_BODEGA,
+                "Estado": cumplimiento_texto(float(reg.get("cumplimiento", 0))),
+                "Puntos evaluados": total,
+                "No conformes": no_conformes,
+                "Observaciones": observaciones,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def build_items_dataframe(inspecciones):
+    rows = []
+    for reg in inspecciones:
+        for item in normalizar_items_legacy(reg.get("items", [])):
+            rows.append(
+                {
+                    "Fecha": pd.to_datetime(reg.get("fecha")),
+                    "Responsable": reg.get("responsable", ""),
+                    "Bodega": reg.get("bodega", ""),
+                    "Punto": item.get("punto", ""),
+                    "Cumple": bool(item.get("cumple")),
+                    "Severidad": item.get("severidad", ""),
+                    "Observacion": item.get("observacion", ""),
+                    "Fotos": len(item.get("fotos", [])),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def generar_pdf(registro):
+    fecha_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+    pdf_path = os.path.join(
+        REPORTS_DIR,
+        f"Informe_5S_PRO_{registro['bodega'].replace(' ', '_')}_{fecha_id}.pdf",
+    )
+
+    doc = SimpleDocTemplate(
+        pdf_path,
+        pagesize=A4,
+        rightMargin=1.2 * cm,
+        leftMargin=1.2 * cm,
+        topMargin=1.0 * cm,
+        bottomMargin=1.0 * cm,
+    )
+
+    styles = getSampleStyleSheet()
+    styles.add(
+        ParagraphStyle(
+            name="TitleBlue",
+            parent=styles["Title"],
+            alignment=TA_CENTER,
+            fontSize=18,
+            leading=22,
+            textColor=colors.HexColor("#061f45"),
+            spaceAfter=4,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="HBlue",
+            parent=styles["Heading2"],
+            fontSize=14,
+            leading=16,
+            textColor=colors.HexColor("#061f45"),
+            spaceAfter=8,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="NormalSmall",
+            parent=styles["Normal"],
+            fontSize=8.5,
+            leading=10.5,
+            alignment=TA_LEFT,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="MetaCenterValue",
+            parent=styles["Normal"],
+            alignment=TA_CENTER,
+            fontSize=12,
+            leading=16,
+            textColor=colors.HexColor("#061f45"),
+        )
+    )
+
+    story = []
+    header_logo = ""
+    if os.path.exists(LOGO_INOVA):
+        try:
+            header_logo = RLImage(LOGO_INOVA, width=2.2 * cm, height=2.2 * cm)
+        except Exception:
+            header_logo = ""
+
+    score_color = "#13A35B" if registro["cumplimiento"] >= META_BODEGA else "#D53333"
+    title = Paragraph(
+        "<b>INFORME EJECUTIVO DE AUDITORIA 5S</b><br/>"
+        "<font size='9' color='#52667A'>Control visual, cumplimiento por bodega, hallazgos y evidencias fotograficas</font>",
+        styles["TitleBlue"],
+    )
+    top_header = Table([[header_logo, title]], colWidths=[2.6 * cm, 13.2 * cm])
+    top_header.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("ALIGN", (1, 0), (1, 0), "CENTER"),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ]
+        )
+    )
+    story.append(top_header)
+
+    meta_html = f"""
+    <b>Fecha:</b> {registro['fecha']}<br/>
+    <b>Semana:</b> {registro.get('semana', '')}<br/>
+    <b>Responsable:</b> {registro['responsable']}<br/>
+    <b>Bodega:</b> {registro['bodega']}<br/>
+    <b>Area:</b> {registro['area']}<br/>
+    <b>Meta requerida:</b> >= {META_BODEGA:.0f}%<br/><br/>
+    <font size='18' color='{score_color}'><b>{registro['cumplimiento']:.1f}%</b></font><br/>
+    <b>{cumplimiento_texto(registro['cumplimiento'])}</b>
+    """
+    meta_box = Table([[Paragraph(meta_html, styles["MetaCenterValue"])]], colWidths=[15.8 * cm])
+    meta_box.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F7FAFD")),
+                ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor("#D5E0EB")),
+                ("LEFTPADDING", (0, 0), (-1, -1), 14),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 14),
+                ("TOPPADDING", (0, 0), (-1, -1), 14),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ]
+        )
+    )
+    story.append(meta_box)
+    story.append(Spacer(1, 0.35 * cm))
+
+    items = normalizar_items_legacy(registro["items"])
+    total_items = len(items)
+    cumplidos = sum(1 for x in items if x["cumple"])
+    no_conformes = total_items - cumplidos
+    hallazgos = [x for x in items if (not x["cumple"]) or str(x.get("observacion", "")).strip()]
+
+    story.append(Paragraph("1. Resumen ejecutivo", styles["HBlue"]))
+    resumen_data = [
+        ["Indicador", "Resultado"],
+        ["Cumplimiento de bodega", f"{registro['cumplimiento']:.1f}%"],
+        ["Meta bodega", f">= {META_BODEGA:.0f}%"],
+        ["Nivel de desempeno", cumplimiento_texto(registro["cumplimiento"])],
+        ["Puntos evaluados", str(total_items)],
+        ["Puntos conformes", str(cumplidos)],
+        ["Puntos no conformes", str(no_conformes)],
+        ["Hallazgos / novedades", str(len(hallazgos))],
+    ]
+    resumen_table = Table(resumen_data, colWidths=[7.8 * cm, 7.1 * cm])
+    resumen_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#061f45")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#c7d6e5")),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("PADDING", (0, 0), (-1, -1), 7),
+            ]
+        )
+    )
+    story.append(resumen_table)
+    story.append(Spacer(1, 0.4 * cm))
+
+    story.append(Paragraph("2. Matriz tecnica de verificacion", styles["HBlue"]))
+    detalle = [["Item", "Punto evaluado", "Estado", "Severidad", "Observacion", "Fotos"]]
+    for i, item in enumerate(items, start=1):
+        detalle.append(
+            [
+                str(i),
+                Paragraph(item["punto"], styles["NormalSmall"]),
+                "Conforme" if item["cumple"] else "No conforme",
+                item.get("severidad", ""),
+                Paragraph(item.get("observacion") or "-", styles["NormalSmall"]),
+                str(len(item.get("fotos", []))),
+            ]
+        )
+
+    detalle_table = Table(
+        detalle,
+        colWidths=[0.9 * cm, 6.3 * cm, 2.0 * cm, 1.8 * cm, 3.9 * cm, 0.9 * cm],
+        repeatRows=1,
+    )
+    detalle_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#061f45")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#c7d6e5")),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("PADDING", (0, 0), (-1, -1), 5),
+            ]
+        )
+    )
+    story.append(detalle_table)
+
+    if hallazgos:
+        story.append(PageBreak())
+        story.append(Paragraph("3. Hallazgos y acciones sugeridas", styles["HBlue"]))
+        for i, item in enumerate(hallazgos, start=1):
+            accion = "Ejecutar accion correctiva y validar cierre en proxima auditoria."
+            if item.get("cumple"):
+                accion = "Mantener seguimiento preventivo y documentar oportunidad de mejora."
+            texto = (
+                f"<b>{i}. {item['punto']}</b><br/>"
+                f"Estado: {'Conforme con observacion' if item.get('cumple') else 'No conforme'}<br/>"
+                f"Severidad: {item.get('severidad', '-')}<br/>"
+                f"Observacion: {item.get('observacion') or 'Sin detalle adicional.'}<br/>"
+                f"Accion sugerida: {accion}"
+            )
+            story.append(Paragraph(texto, styles["Normal"]))
+            story.append(Spacer(1, 0.18 * cm))
+
+    evidencias = [x for x in items if x.get("fotos")]
+    if evidencias:
+        story.append(PageBreak())
+        story.append(Paragraph("4. Evidencias fotograficas", styles["HBlue"]))
+        contador = 1
+        for item in evidencias:
+            story.append(Paragraph(f"<b>Punto:</b> {item['punto']}", styles["Normal"]))
+            story.append(Spacer(1, 0.1 * cm))
+            for foto in item.get("fotos", []):
+                try:
+                    resize_image(foto, max_width=1300)
+                    w_px, h_px = fit_image_box(foto)
+                    img = RLImage(foto, width=min(w_px / 96, 15.2) * cm, height=min(h_px / 96, 8.3) * cm)
+                    img_table = Table([[img]], colWidths=[16.0 * cm])
+                    img_table.setStyle(
+                        TableStyle(
+                            [
+                                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                                ("BOX", (0, 0), (-1, -1), 0.6, colors.HexColor("#d1dce8")),
+                                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f8fbff")),
+                                ("PADDING", (0, 0), (-1, -1), 8),
+                            ]
+                        )
+                    )
+                    story.append(Paragraph(f"Evidencia {contador}", styles["NormalSmall"]))
+                    story.append(img_table)
+                    story.append(Spacer(1, 0.25 * cm))
+                    contador += 1
+                except Exception:
+                    story.append(Paragraph("No fue posible cargar una evidencia fotografica.", styles["NormalSmall"]))
+
+    doc.build(story)
+    return pdf_path
+
+
+def exportar_gantt_html(fig):
+    semana = get_week_label()
+    filename = f"Cronograma_5S_PRO_{semana}.html"
+    html = fig.to_html(full_html=True, include_plotlyjs=True)
+    buffer = io.StringIO()
+    buffer.write(html)
+    buffer.seek(0)
     return buffer, filename
 
 
@@ -632,314 +944,107 @@ def guardar_gantt_png(fig):
     import plotly.io as pio
 
     semana = get_week_label()
-    filename = f"Cronograma_{semana}.png"
+    filename = f"Cronograma_5S_PRO_{semana}.png"
     output_path = os.path.join(DATA_DIR, filename)
-
-    fig.update_layout(
-        paper_bgcolor="white",
-        plot_bgcolor="white",
-        font=dict(color="#1f2937"),
-        title_font=dict(color="#061f45"),
-        legend=dict(bgcolor="rgba(255,255,255,0.85)"),
-        margin=dict(l=180, r=50, t=80, b=50)
-    )
-
-    fig.update_yaxes(automargin=True)
-    fig.update_xaxes(automargin=True)
-
-    img_bytes = pio.to_image(
-        fig,
-        format="png",
-        width=2200,
-        height=1000,
-        scale=2
-    )
-
+    img_bytes = pio.to_image(fig, format="png", width=2200, height=1100, scale=2)
     with open(output_path, "wb") as f:
         f.write(img_bytes)
-
     return output_path, filename
 
+# =========================================================
+# LOGIN
+# =========================================================
+def init_login():
+    if "autenticado" not in st.session_state:
+        st.session_state.autenticado = False
+    if "usuario_actual" not in st.session_state:
+        st.session_state.usuario_actual = ""
 
-def exportar_gantt_html(fig):
-    semana = get_week_label()
-    filename = f"Cronograma_{semana}.html"
-    buffer = io.StringIO()
-    html = fig.to_html(full_html=True, include_plotlyjs=True)
-    buffer.write(html)
-    buffer.seek(0)
-    return buffer, filename
 
-
-def generar_pdf(registro):
-    fecha_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-    pdf_path = os.path.join(
-        REPORTS_DIR,
-        f"Informe_5S_{registro['bodega'].replace(' ', '_')}_{fecha_id}.pdf"
+def mostrar_login():
+    st.markdown(
+        """
+        <style>
+        [data-testid="stSidebar"] {display:none !important;}
+        #MainMenu {visibility:hidden;}
+        footer {visibility:hidden;}
+        header {visibility:hidden;}
+        .block-container {max-width:100% !important;padding:0 !important;margin:0 !important;}
+        .stApp{
+            min-height:100vh;
+            background:
+                radial-gradient(circle at 20% 12%, rgba(21,108,193,0.30), transparent 22%),
+                radial-gradient(circle at 86% 18%, rgba(6,31,69,0.25), transparent 24%),
+                linear-gradient(135deg, #eef4fb 0%, #dfeaf5 100%) !important;
+        }
+        .login-shell{
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:22px;
+        }
+        .login-card-pro{
+            width:430px;
+            max-width:92vw;
+            background:rgba(255,255,255,0.88);
+            backdrop-filter:blur(16px);
+            border:1px solid rgba(255,255,255,0.72);
+            box-shadow:0 30px 70px rgba(6,31,69,0.22);
+            border-radius:32px;
+            padding:26px;
+        }
+        .login-title{
+            text-align:center;
+            color:#061f45;
+            font-size:2.1rem;
+            font-weight:900;
+            letter-spacing:-0.04em;
+            margin-top:8px;
+        }
+        .login-sub{
+            text-align:center;
+            color:#667085;
+            font-size:0.94rem;
+            margin-bottom:18px;
+        }
+        div[data-testid="stForm"]{
+            background:transparent !important;
+            border:none !important;
+            box-shadow:none !important;
+            padding:0 !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
     )
 
-    doc = SimpleDocTemplate(
-        pdf_path,
-        pagesize=A4,
-        rightMargin=1.25 * cm,
-        leftMargin=1.25 * cm,
-        topMargin=1.0 * cm,
-        bottomMargin=1.0 * cm
-    )
-
-    styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(
-        name="TitleBlue",
-        parent=styles["Title"],
-        alignment=TA_CENTER,
-        fontSize=18,
-        leading=22,
-        textColor=colors.HexColor("#061f45"),
-        spaceAfter=4
-    ))
-    styles.add(ParagraphStyle(
-        name="SubBlue",
-        parent=styles["Normal"],
-        alignment=TA_CENTER,
-        fontSize=10,
-        leading=13,
-        textColor=colors.HexColor("#4f6279")
-    ))
-    styles.add(ParagraphStyle(
-        name="HBlue",
-        parent=styles["Heading2"],
-        fontSize=14,
-        leading=16,
-        textColor=colors.HexColor("#061f45"),
-        spaceAfter=8
-    ))
-    styles.add(ParagraphStyle(
-        name="NormalSmall",
-        parent=styles["Normal"],
-        fontSize=9,
-        leading=11,
-        alignment=TA_LEFT
-    ))
-    styles.add(ParagraphStyle(
-        name="PhotoCaption",
-        parent=styles["Normal"],
-        fontSize=9,
-        leading=12,
-        textColor=colors.HexColor("#425466")
-    ))
-    styles.add(ParagraphStyle(
-        name="MetaCenterValue",
-        parent=styles["Normal"],
-        alignment=TA_CENTER,
-        fontSize=14,
-        leading=17,
-        textColor=colors.HexColor("#061f45")
-    ))
-
-    story = []
-
-    header_logo = ""
-    easy_logo = ""
-
+    st.markdown('<div class="login-shell"><div class="login-card-pro">', unsafe_allow_html=True)
     if os.path.exists(LOGO_INOVA):
-        try:
-            header_logo = RLImage(LOGO_INOVA, width=2.2 * cm, height=2.2 * cm)
-        except Exception:
-            header_logo = ""
-
-    if os.path.exists(LOGO_EASY):
-        try:
-            easy_logo = RLImage(LOGO_EASY, width=1.25 * cm, height=1.25 * cm)
-        except Exception:
-            easy_logo = ""
-
-    top_header = Table(
-        [[
-            header_logo,
-            Paragraph(
-                "<b>INFORME DE AUDITORÍA 5S</b><br/>"
-                "<font size='10' color='#52667A'>Sistema de seguimiento, control visual y verificación operativa por bodegas</font>",
-                styles["TitleBlue"]
-            ),
-            easy_logo
-        ]],
-        colWidths=[2.7 * cm, 11.0 * cm, 2.0 * cm]
+        c1, c2, c3 = st.columns([1, 1, 1])
+        with c2:
+            st.image(LOGO_INOVA, width=86)
+    st.markdown('<div class="login-title">5S INOVA PRO</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="login-sub">Centro ejecutivo de auditoria, control visual y excelencia operacional 5S</div>',
+        unsafe_allow_html=True,
     )
-    top_header.setStyle(TableStyle([
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("ALIGN", (0, 0), (0, 0), "LEFT"),
-        ("ALIGN", (1, 0), (1, 0), "CENTER"),
-        ("ALIGN", (2, 0), (2, 0), "RIGHT"),
-        ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        ("TOPPADDING", (0, 0), (-1, -1), 0),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
-    ]))
-    story.append(top_header)
-    story.append(Spacer(1, 0.25 * cm))
+    with st.form("login_form", clear_on_submit=False):
+        usuario = st.text_input("USUARIO", placeholder="Ingrese su usuario").strip().upper()
+        clave = st.text_input("CONTRASEÑA", type="password", placeholder="Ingrese su contraseña")
+        entrar = st.form_submit_button("ACCEDER AL SISTEMA", use_container_width=True)
+    if entrar:
+        if usuario in USUARIOS_SISTEMA and USUARIOS_SISTEMA[usuario] == clave:
+            st.session_state.autenticado = True
+            st.session_state.usuario_actual = usuario
+            st.rerun()
+        else:
+            st.error("Usuario o contraseña incorrectos.")
+    st.markdown("</div></div>", unsafe_allow_html=True)
 
-    meta_center_html = f"""
-    <b>Fecha inspección</b><br/>
-    <font color="#061f45">{registro["fecha"]}</font><br/><br/>
-
-    <b>Responsable</b><br/>
-    <font color="#061f45">{registro["responsable"]}</font><br/><br/>
-
-    <b>Bodega</b><br/>
-    <font color="#061f45">{registro["bodega"]}</font><br/><br/>
-
-    <b>Área / proceso</b><br/>
-    <font color="#061f45">{registro["area"]}</font>
-    """
-
-    meta_center_box = Table(
-        [[Paragraph(meta_center_html, styles["MetaCenterValue"])]],
-        colWidths=[15.8 * cm]
-    )
-    meta_center_box.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, -1), colors.white),
-        ("BOX", (0, 0), (-1, -1), 0.6, colors.HexColor("#D5E0EB")),
-        ("LEFTPADDING", (0, 0), (-1, -1), 14),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 14),
-        ("TOPPADDING", (0, 0), (-1, -1), 14),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-    ]))
-    story.append(meta_center_box)
-    story.append(Spacer(1, 0.35 * cm))
-
-    desc_box = Table(
-        [[Paragraph(
-            "Este documento consolida el resultado técnico de la auditoría 5S ejecutada sobre la bodega evaluada, "
-            "incluyendo el porcentaje de cumplimiento, los hallazgos registrados, las observaciones operativas, "
-            "la trazabilidad del responsable y las evidencias fotográficas asociadas a cada punto de control.",
-            styles["Normal"]
-        )]],
-        colWidths=[15.8 * cm]
-    )
-    desc_box.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F7FAFD")),
-        ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#D7E2EC")),
-        ("LEFTPADDING", (0, 0), (-1, -1), 10),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-        ("TOPPADDING", (0, 0), (-1, -1), 8),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-    ]))
-    story.append(desc_box)
-    story.append(Spacer(1, 0.40 * cm))
-
-    items = normalizar_items_legacy(registro["items"])
-    cumplimiento = registro["cumplimiento"]
-    total_items = len(items)
-    cumplidos = sum(1 for x in items if x["cumple"])
-    no_conformes = total_items - cumplidos
-    hallazgos = [x for x in items if (not x["cumple"]) or (x["observacion"] and x["observacion"].strip())]
-
-    story.append(Paragraph("1. Resumen ejecutivo", styles["HBlue"]))
-    resumen_data = [
-        ["Indicador", "Resultado"],
-        ["Porcentaje de cumplimiento", f"{cumplimiento:.1f}%"],
-        ["Nivel de desempeño", cumplimiento_texto(cumplimiento)],
-        ["Puntos evaluados", str(total_items)],
-        ["Puntos conformes", str(cumplidos)],
-        ["Puntos no conformes", str(no_conformes)],
-        ["Puntos con hallazgo o novedad", str(len(hallazgos))]
-    ]
-    resumen_table = Table(resumen_data, colWidths=[7.8 * cm, 7.1 * cm])
-    resumen_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#061f45")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#c7d6e5")),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("PADDING", (0, 0), (-1, -1), 7),
-    ]))
-    story.append(resumen_table)
-    story.append(Spacer(1, 0.45 * cm))
-
-    story.append(Paragraph("2. Matriz técnica de verificación", styles["HBlue"]))
-    detalle = [["Ítem", "Punto evaluado", "Estado", "Observación", "Fotos"]]
-    for i, item in enumerate(items, start=1):
-        fotos = item.get("fotos", [])
-        detalle.append([
-            str(i),
-            Paragraph(item["punto"], styles["NormalSmall"]),
-            "Conforme" if item["cumple"] else "No conforme",
-            Paragraph(item["observacion"] if item["observacion"] else "-", styles["NormalSmall"]),
-            str(len(fotos))
-        ])
-
-    detalle_table = Table(detalle, colWidths=[1.0 * cm, 7.0 * cm, 2.2 * cm, 4.2 * cm, 1.4 * cm], repeatRows=1)
-    detalle_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#061f45")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#c7d6e5")),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("PADDING", (0, 0), (-1, -1), 5),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-    ]))
-    story.append(detalle_table)
-    story.append(Spacer(1, 0.4 * cm))
-
-    story.append(Paragraph("3. Hallazgos y observaciones relevantes", styles["HBlue"]))
-    if hallazgos:
-        for i, item in enumerate(hallazgos, start=1):
-            texto = f"<b>{i}.</b> {item['punto']}<br/>"
-            texto += "Estado: Conforme con observación.<br/>" if item["cumple"] else "Estado: No conforme.<br/>"
-            texto += f"Observación: {item['observacion'] if item['observacion'] else 'Sin detalle adicional.'}<br/>"
-            texto += f"Cantidad de evidencias: {len(item.get('fotos', []))}"
-            story.append(Paragraph(texto, styles["Normal"]))
-            story.append(Spacer(1, 0.15 * cm))
-    else:
-        story.append(Paragraph("No se registraron hallazgos relevantes en la evaluación realizada.", styles["Normal"]))
-
-    evidencias = [x for x in items if x.get("fotos")]
-    if evidencias:
-        story.append(PageBreak())
-        story.append(Paragraph("4. Evidencias fotográficas", styles["HBlue"]))
-        story.append(Spacer(1, 0.15 * cm))
-
-        contador_evidencia = 1
-        for item in evidencias:
-            story.append(Paragraph(f"<b>Punto evaluado:</b> {item['punto']}", styles["Normal"]))
-            if item["observacion"]:
-                story.append(Paragraph(f"Observación asociada: {item['observacion']}", styles["PhotoCaption"]))
-            story.append(Spacer(1, 0.10 * cm))
-
-            for foto in item.get("fotos", []):
-                try:
-                    story.append(Paragraph(f"<b>Evidencia {contador_evidencia}</b>", styles["PhotoCaption"]))
-                    resize_image(foto, max_width=1300)
-                    w_px, h_px = fit_image_box(foto, max_w_px=980, max_h_px=520)
-                    w_scale = min((w_px / 96), 15.2)
-                    h_scale = min((h_px / 96), 8.3)
-
-                    img = RLImage(foto, width=w_scale * cm, height=h_scale * cm)
-
-                    img_table = Table([[img]], colWidths=[16.0 * cm])
-                    img_table.setStyle(TableStyle([
-                        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                        ("BOX", (0, 0), (-1, -1), 0.6, colors.HexColor("#d1dce8")),
-                        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f8fbff")),
-                        ("LEFTPADDING", (0, 0), (-1, -1), 10),
-                        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-                        ("TOPPADDING", (0, 0), (-1, -1), 10),
-                        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-                    ]))
-                    story.append(img_table)
-                    story.append(Spacer(1, 0.25 * cm))
-                    contador_evidencia += 1
-                except Exception:
-                    story.append(Paragraph("No fue posible cargar una de las evidencias fotográficas.", styles["PhotoCaption"]))
-                    story.append(Spacer(1, 0.15 * cm))
-
-            story.append(Spacer(1, 0.18 * cm))
-
-    doc.build(story)
-    return pdf_path
-
-
+# =========================================================
+# SESION
+# =========================================================
 def init_session():
     if "selected_bodega" not in st.session_state:
         st.session_state.selected_bodega = list(BODEGAS.keys())[0]
@@ -950,480 +1055,610 @@ def init_session():
         for reg in inspecciones_cargadas:
             reg["items"] = normalizar_items_legacy(reg.get("items", []))
         st.session_state.inspecciones = inspecciones_cargadas
+    if "responsables" not in st.session_state:
+        st.session_state.responsables = safe_load_json(RESPONSIBLES_PATH, RESPONSABLES_DEFAULT)
+        if not st.session_state.responsables:
+            st.session_state.responsables = RESPONSABLES_DEFAULT
+            safe_save_json(RESPONSIBLES_PATH, RESPONSABLES_DEFAULT)
 
 
-init_session()
 init_login()
+init_session()
 
 if not st.session_state.autenticado:
     mostrar_login()
     st.stop()
 
 # =========================================================
-# HEADER
+# HEADER PRINCIPAL
 # =========================================================
-st.markdown('<div class="top-shell">', unsafe_allow_html=True)
-h1, h2 = st.columns([1.1, 6.4], gap="small")
-with h1:
-    if os.path.exists(LOGO_INOVA):
-        st.image(LOGO_INOVA, width=120)
-with h2:
-    st.markdown(
-        """
-        <div class="top-banner">
-            <div>
-                <div class="top-title">Sistema 5S - INOVA</div>
-                <div class="top-subtitle">Cronograma, auditoría fotográfica, trazabilidad de cumplimiento, indicadores y reportes ejecutivos por bodega.</div>
+def render_header():
+    promedio = 0.0
+    if st.session_state.inspecciones:
+        df_head = build_inspection_dataframe(st.session_state.inspecciones)
+        promedio = float(df_head["Cumplimiento"].mean()) if not df_head.empty else 0.0
+
+    st.markdown('<div class="top-shell">', unsafe_allow_html=True)
+    h1, h2 = st.columns([1.05, 7.4], gap="small")
+    with h1:
+        if os.path.exists(LOGO_INOVA):
+            st.image(LOGO_INOVA, width=124)
+        else:
+            st.markdown("### 5S")
+    with h2:
+        status_html = cumplimiento_badge(promedio) if promedio else '<span class="badge-blue">Sistema activo</span>'
+        st.markdown(
+            f"""
+            <div class="top-banner">
+                <div>
+                    <div class="top-title">Sistema 5S INOVA PRO</div>
+                    <div class="top-subtitle">Cronograma ejecutivo, auditoria fotografica, cumplimiento por bodega, responsables, indicadores y reportes profesionales.</div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+                    <div class="header-badge">Usuario: {st.session_state.usuario_actual}</div>
+                    <div class="header-badge">Meta global: >= {META_GENERAL:.0f}%</div>
+                    {status_html}
+                </div>
             </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-st.markdown('</div>', unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
 
-menu = st.sidebar.radio("Módulos", ["Inicio", "Cronograma", "Inspección", "Dashboard"])
+
+render_header()
 
 # =========================================================
-# BOTONES EXCLUSIVOS DE ELIMINAR POR DÍA
+# SIDEBAR
 # =========================================================
+menu = st.sidebar.radio(
+    "Módulos",
+    ["Inicio Ejecutivo", "Cronograma 5S", "Inspección 5S", "Responsables", "Dashboard Ejecutivo"],
+)
+
 st.sidebar.markdown("---")
 st.sidebar.subheader("Eliminar por día")
-
-fecha_borrar_crono = st.sidebar.date_input("Fecha cronograma a eliminar", value=date.today(), key="fecha_borrar_crono")
+fecha_borrar_crono = st.sidebar.date_input("Fecha cronograma", value=date.today(), key="fecha_borrar_crono")
 if st.sidebar.button("Eliminar cronograma del día", use_container_width=True):
     antes = len(st.session_state.cronograma)
     fecha_txt = str(fecha_borrar_crono)
     st.session_state.cronograma = [
-        x for x in st.session_state.cronograma
-        if str(x.get("fecha_inicio", ""))[:10] != fecha_txt
+        x for x in st.session_state.cronograma if str(x.get("fecha_inicio", ""))[:10] != fecha_txt
     ]
     safe_save_json(SCHEDULE_PATH, st.session_state.cronograma)
-    borrados = antes - len(st.session_state.cronograma)
-    if borrados > 0:
-        st.sidebar.success(f"Se eliminaron {borrados} actividades del cronograma del día {fecha_txt}.")
-    else:
-        st.sidebar.info(f"No había actividades de cronograma para {fecha_txt}.")
+    st.sidebar.success(f"Actividades eliminadas: {antes - len(st.session_state.cronograma)}")
 
-fecha_borrar_insp = st.sidebar.date_input("Fecha inspección a eliminar", value=date.today(), key="fecha_borrar_insp")
+fecha_borrar_insp = st.sidebar.date_input("Fecha inspección", value=date.today(), key="fecha_borrar_insp")
 if st.sidebar.button("Eliminar inspecciones del día", use_container_width=True):
     antes = len(st.session_state.inspecciones)
     fecha_txt = str(fecha_borrar_insp)
     st.session_state.inspecciones = [
-        x for x in st.session_state.inspecciones
-        if str(x.get("fecha", ""))[:10] != fecha_txt
+        x for x in st.session_state.inspecciones if str(x.get("fecha", ""))[:10] != fecha_txt
     ]
     safe_save_json(DB_PATH, st.session_state.inspecciones)
     rebuild_excel_from_inspections(st.session_state.inspecciones)
-    borrados = antes - len(st.session_state.inspecciones)
-    if borrados > 0:
-        st.sidebar.success(f"Se eliminaron {borrados} inspecciones del día {fecha_txt}.")
-    else:
-        st.sidebar.info(f"No había inspecciones para {fecha_txt}.")
+    st.sidebar.success(f"Inspecciones eliminadas: {antes - len(st.session_state.inspecciones)}")
 
-st.sidebar.markdown("<div style='height: 60px;'></div>", unsafe_allow_html=True)
 st.sidebar.markdown("---")
-st.sidebar.markdown(
-    f"""
-    <div style="
-        background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
-        border: 1px solid #dbe6f1;
-        border-radius: 16px;
-        padding: 14px 14px 10px 14px;
-        box-shadow: 0 6px 16px rgba(8, 32, 68, 0.04);
-        margin-top: 4px;
-    ">
-        <div style="font-size: 0.78rem; color: #6b7280; font-weight: 700; margin-bottom: 6px;">SESIÓN ACTIVA</div>
-        <div style="font-size: 1rem; color: #082b5c; font-weight: 800;">{st.session_state.usuario_actual}</div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
+st.sidebar.markdown(f"**Sesión activa:** {st.session_state.usuario_actual}")
 if st.sidebar.button("Cerrar sesión", use_container_width=True):
     st.session_state.autenticado = False
     st.session_state.usuario_actual = ""
     st.rerun()
 
 # =========================================================
-# INICIO
+# INICIO EJECUTIVO
 # =========================================================
-if menu == "Inicio":
+if menu == "Inicio Ejecutivo":
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">Resumen general del sistema</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Centro ejecutivo 5S</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="section-subtitle">Vista general del sistema, metas corporativas, auditorias y criticidad operacional.</div>',
+        unsafe_allow_html=True,
+    )
 
+    df_ini = build_inspection_dataframe(st.session_state.inspecciones) if st.session_state.inspecciones else pd.DataFrame()
+    promedio = float(df_ini["Cumplimiento"].mean()) if not df_ini.empty else 0.0
+    bodegas_criticas = int((df_ini["Cumplimiento"] < META_BODEGA).sum()) if not df_ini.empty else 0
     total_bodegas = len(BODEGAS)
     total_puntos = sum(len(v) for v in BODEGAS.values())
-    total_inspecciones = len(st.session_state.inspecciones)
+    auditorias_semana = 0
+    if not df_ini.empty:
+        hoy = pd.Timestamp(date.today())
+        inicio_semana = hoy - pd.Timedelta(days=hoy.weekday())
+        auditorias_semana = int((df_ini["Fecha"] >= inicio_semana).sum())
 
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4, c5 = st.columns(5)
     with c1:
-        st.markdown(f'<div class="kpi-card"><div class="kpi-label">Bodegas activas</div><div class="kpi-value">{total_bodegas}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-card"><div class="kpi-label">Promedio general</div><div class="kpi-value">{promedio:.1f}%</div><div class="kpi-note">Meta >= {META_GENERAL:.0f}%</div></div>', unsafe_allow_html=True)
     with c2:
-        st.markdown(f'<div class="kpi-card"><div class="kpi-label">Puntos de control</div><div class="kpi-value">{total_puntos}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-card"><div class="kpi-label">Bodegas activas</div><div class="kpi-value">{total_bodegas}</div><div class="kpi-note">Checklist operativo</div></div>', unsafe_allow_html=True)
     with c3:
-        st.markdown(f'<div class="kpi-card"><div class="kpi-label">Inspecciones registradas</div><div class="kpi-value">{total_inspecciones}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-card"><div class="kpi-label">Puntos de control</div><div class="kpi-value">{total_puntos}</div><div class="kpi-note">Distribuidos por bodega</div></div>', unsafe_allow_html=True)
+    with c4:
+        st.markdown(f'<div class="kpi-card"><div class="kpi-label">Auditorías semana</div><div class="kpi-value">{auditorias_semana}</div><div class="kpi-note">ISO semanal</div></div>', unsafe_allow_html=True)
+    with c5:
+        st.markdown(f'<div class="kpi-card"><div class="kpi-label">Alertas críticas</div><div class="kpi-value">{bodegas_criticas}</div><div class="kpi-note">Bajo meta</div></div>', unsafe_allow_html=True)
+
+    st.markdown("---")
+    c_left, c_right = st.columns([1.2, 1])
+    with c_left:
+        st.markdown("#### Mapa ejecutivo de bodegas")
+        for bodega, puntos in BODEGAS.items():
+            ult = None
+            if not df_ini.empty:
+                filtro = df_ini[df_ini["Bodega"] == bodega].sort_values("Fecha", ascending=False)
+                if not filtro.empty:
+                    ult = float(filtro.iloc[0]["Cumplimiento"])
+            valor = ult if ult is not None else 0
+            badge = cumplimiento_badge(valor) if ult is not None else '<span class="badge-gray">Sin auditoría</span>'
+            st.markdown(
+                f"""
+                <div class="exec-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                        <div>
+                            <div style="font-weight:900;color:#061f45;font-size:1.05rem;">{bodega}</div>
+                            <div style="color:#667085;font-size:0.9rem;">{len(puntos)} puntos de control · Meta >= {META_BODEGA:.0f}%</div>
+                        </div>
+                        <div>{badge}</div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+    with c_right:
+        st.markdown("#### Indicador corporativo")
+        fig_gauge = go.Figure(
+            go.Indicator(
+                mode="gauge+number+delta",
+                value=promedio,
+                delta={"reference": META_GENERAL},
+                gauge={
+                    "axis": {"range": [0, 100]},
+                    "bar": {"color": "#156CC1"},
+                    "steps": [
+                        {"range": [0, 75], "color": "#FDECEC"},
+                        {"range": [75, 90], "color": "#FFF7DF"},
+                        {"range": [90, 100], "color": "#E9F8EF"},
+                    ],
+                    "threshold": {"line": {"color": "#061F45", "width": 4}, "thickness": 0.75, "value": META_GENERAL},
+                },
+                title={"text": "Promedio General 5S"},
+            )
+        )
+        fig_gauge.update_layout(height=360, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor="white")
+        st.plotly_chart(fig_gauge, use_container_width=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# =========================================================
+# RESPONSABLES
+# =========================================================
+elif menu == "Responsables":
+    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Gestión de responsables 5S</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-subtitle">Responsables base del Word y opción para añadir nuevos responsables.</div>', unsafe_allow_html=True)
+
+    c1, c2 = st.columns([0.85, 1.4])
+    with c1:
+        st.markdown("#### Nuevo responsable")
+        with st.form("form_responsable"):
+            nombre = st.text_input("Nombre completo", placeholder="Ej. Nuevo responsable")
+            cargo = st.text_input("Cargo", value="Responsable 5S")
+            area = st.text_input("Área", value="Operaciones")
+            color = st.color_picker("Color visual", value="#156CC1")
+            guardar_resp = st.form_submit_button("Agregar responsable", use_container_width=True)
+        if guardar_resp:
+            if not nombre.strip():
+                st.error("Debes ingresar el nombre del responsable.")
+            else:
+                nuevo = {
+                    "id": slugify(nombre),
+                    "nombre": nombre.strip(),
+                    "cargo": cargo.strip() or "Responsable 5S",
+                    "area": area.strip() or "Operaciones",
+                    "color": color,
+                    "activo": True,
+                }
+                st.session_state.responsables.append(nuevo)
+                safe_save_json(RESPONSIBLES_PATH, st.session_state.responsables)
+                st.success("Responsable agregado correctamente.")
+                st.rerun()
+    with c2:
+        st.markdown("#### Responsables activos")
+        for idx, r in enumerate(st.session_state.responsables):
+            col_a, col_b, col_c = st.columns([0.1, 1.3, 0.35])
+            with col_a:
+                st.markdown(f"<div style='width:18px;height:18px;border-radius:50%;background:{r.get('color','#156CC1')};margin-top:10px;'></div>", unsafe_allow_html=True)
+            with col_b:
+                estado = "Activo" if r.get("activo", True) else "Inactivo"
+                st.markdown(f"**{r.get('nombre')}**  ")
+                st.caption(f"{r.get('cargo','')} · {r.get('area','')} · {estado}")
+            with col_c:
+                if st.button("Desactivar" if r.get("activo", True) else "Activar", key=f"toggle_resp_{idx}"):
+                    st.session_state.responsables[idx]["activo"] = not r.get("activo", True)
+                    safe_save_json(RESPONSIBLES_PATH, st.session_state.responsables)
+                    st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
 # CRONOGRAMA
 # =========================================================
-elif menu == "Cronograma":
+elif menu == "Cronograma 5S":
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">Cronograma maestro y diagrama de Gantt</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Programar auditoría 5S</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-subtitle">Cronograma visual ejecutivo con eje X por fecha, bodega, día y responsable.</div>', unsafe_allow_html=True)
 
-    with st.form("form_cronograma"):
-        c1, c2, c3 = st.columns(3)
+    responsables_activos = get_responsables_activos()
+    nombres_responsables = [r["nombre"] for r in responsables_activos]
+
+    with st.form("form_cronograma_pro"):
+        c1, c2, c3, c4 = st.columns(4)
         with c1:
             bodega = st.selectbox("Bodega", list(BODEGAS.keys()))
         with c2:
-            responsable = st.text_input("Responsable")
+            responsable = st.selectbox("Responsable", nombres_responsables if nombres_responsables else ["Sin responsable"])
         with c3:
-            actividad = st.text_input("Actividad", value="Inspección 5S")
-
-        c4, c5 = st.columns(2)
+            fecha_inicio = st.date_input("Día auditoría", value=date.today())
         with c4:
-            fecha_inicio = st.date_input("Fecha inicio", value=date.today())
+            estado = st.selectbox("Estado", ESTADOS_CRONOGRAMA, index=0)
+
+        c5, c6, c7 = st.columns([1, 1, 1])
         with c5:
-            fecha_fin = st.date_input("Fecha fin", value=date.today())
+            fecha_fin = st.date_input("Fecha fin visual", value=date.today())
+        with c6:
+            prioridad = st.selectbox("Prioridad", ["Alta", "Media", "Baja"], index=1)
+        with c7:
+            actividad = st.text_input("Actividad", value="Auditoría 5S")
 
         observacion = st.text_area("Observación / alcance", height=90)
-        guardar = st.form_submit_button("Guardar actividad", use_container_width=True)
+        guardar = st.form_submit_button("Guardar auditoría programada", use_container_width=True)
 
-        if guardar:
-            fecha_fin_real = fecha_fin
-            if fecha_fin_real <= fecha_inicio:
-                fecha_fin_real = fecha_inicio + timedelta(days=1)
-
-            nuevo = {
-                "bodega": bodega,
-                "responsable": responsable,
-                "actividad": actividad,
-                "fecha_inicio": str(fecha_inicio),
-                "fecha_fin": str(fecha_fin_real),
-                "observacion": observacion
-            }
-            st.session_state.cronograma.append(nuevo)
-            safe_save_json(SCHEDULE_PATH, st.session_state.cronograma)
-            st.success("Actividad agregada al cronograma.")
+    if guardar:
+        fecha_fin_real = fecha_fin
+        if fecha_fin_real <= fecha_inicio:
+            fecha_fin_real = fecha_inicio + timedelta(days=1)
+        nuevo = {
+            "id": datetime.now().strftime("%Y%m%d_%H%M%S_%f"),
+            "bodega": bodega,
+            "responsable": responsable,
+            "actividad": actividad,
+            "fecha_inicio": str(fecha_inicio),
+            "fecha_fin": str(fecha_fin_real),
+            "estado": estado,
+            "prioridad": prioridad,
+            "meta_bodega": META_BODEGA,
+            "observacion": observacion,
+        }
+        st.session_state.cronograma.append(nuevo)
+        safe_save_json(SCHEDULE_PATH, st.session_state.cronograma)
+        st.success("Auditoría agregada al cronograma.")
+        st.rerun()
 
     if st.session_state.cronograma:
         df_crono = pd.DataFrame(st.session_state.cronograma)
         df_crono["fecha_inicio"] = pd.to_datetime(df_crono["fecha_inicio"])
         df_crono["fecha_fin"] = pd.to_datetime(df_crono["fecha_fin"])
+        df_crono["estado_visual"] = df_crono.apply(lambda row: infer_schedule_status(row.to_dict()), axis=1)
+        df_crono["etiqueta"] = df_crono["responsable"].astype(str)
+        df_crono["dia"] = df_crono["fecha_inicio"].dt.strftime("%A %d %b")
 
-        with st.expander("Ver programación registrada", expanded=False):
-            st.dataframe(df_crono, use_container_width=True)
-
-        st.markdown("#### Diagrama de Gantt")
-
-        color_map = {
-            "Bodega General": "#156CC1",
-            "Bodega Tierras": "#7EC0EE",
-            "Bodega Químico": "#FF2D2D",
-            "Bodega Cuarto Frío": "#F2A6A6",
-            "Bodega Cuarto Atemparado": "#2BB3A3",
-            "Bodega Preforma": "#76E09B",
-            "Bodega Alterna": "#FF8A00"
-        }
-
+        st.markdown("#### Cronograma visual ejecutivo")
         fig = px.timeline(
             df_crono,
             x_start="fecha_inicio",
             x_end="fecha_fin",
             y="bodega",
-            color="bodega",
-            text="actividad",
-            hover_data=["responsable", "observacion"],
-            color_discrete_map=color_map
+            color="estado_visual",
+            text="etiqueta",
+            hover_data=["actividad", "responsable", "dia", "prioridad", "meta_bodega", "observacion"],
+            color_discrete_map={
+                "Programada": "#156CC1",
+                "En ejecución": "#D99B00",
+                "Finalizada": "#13A35B",
+                "Vencida": "#667085",
+                "Crítica": "#D53333",
+            },
         )
-
-        fig.update_yaxes(
-            autorange="reversed",
-            showgrid=True,
-            gridcolor="#f1f6fb",
-            automargin=True
-        )
-        fig.update_xaxes(
-            showgrid=True,
-            gridcolor="#e5edf6",
-            automargin=True
-        )
-        fig.update_traces(
-            textposition="inside",
-            insidetextanchor="middle"
-        )
+        fig.update_yaxes(autorange="reversed", title="Bodega", showgrid=True, gridcolor="#eef3f9")
+        fig.update_xaxes(title="Fecha", showgrid=True, gridcolor="#e5edf6", tickformat="%a %d %b")
+        fig.update_traces(textposition="inside", insidetextanchor="middle", marker_line_color="white", marker_line_width=1.6)
         fig.update_layout(
-            height=700,
-            title="Cronograma 5S por bodegas",
+            height=720,
+            title="Cronograma 5S por bodega, día y responsable",
             plot_bgcolor="white",
             paper_bgcolor="white",
-            xaxis_title="Fechas programadas",
-            yaxis_title="Bodegas",
-            legend_title="Bodega",
+            legend_title="Estado",
             font=dict(size=13, color="#1f2937"),
-            margin=dict(l=150, r=40, t=70, b=40),
-            title_font=dict(size=20, color="#061f45")
+            margin=dict(l=150, r=40, t=72, b=45),
+            title_font=dict(size=22, color="#061f45"),
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        col_a, col_b = st.columns(2)
-
-        excel_buffer, excel_name = export_cronograma_excel(df_crono)
-        with col_a:
+        cex1, cex2, cex3 = st.columns(3)
+        with cex1:
+            buffer = export_dataframe_excel(df_crono, "Cronograma")
             st.download_button(
                 "Exportar cronograma Excel",
-                data=excel_buffer.getvalue(),
-                file_name=excel_name,
+                data=buffer.getvalue(),
+                file_name=f"Cronograma_5S_PRO_{get_week_label()}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
+                use_container_width=True,
             )
-
-        with col_b:
+        with cex2:
             try:
                 gantt_png, gantt_name = guardar_gantt_png(fig)
                 with open(gantt_png, "rb") as f:
-                    st.download_button(
-                        "Exportar imagen gráfica Gantt",
-                        data=f.read(),
-                        file_name=gantt_name,
-                        mime="image/png",
-                        use_container_width=True
-                    )
+                    st.download_button("Exportar imagen Gantt", data=f.read(), file_name=gantt_name, mime="image/png", use_container_width=True)
             except Exception:
-                html_buffer, html_name = exportar_gantt_html(fig)
-                st.download_button(
-                    "Exportar Gantt HTML",
-                    data=html_buffer.getvalue(),
-                    file_name=html_name,
-                    mime="text/html",
-                    use_container_width=True
-                )
-                st.warning("En este servidor no se pudo generar PNG. Se habilitó la descarga HTML del Gantt.")
+                st.info("PNG no disponible en este entorno. Usa HTML interactivo.")
+        with cex3:
+            html_buffer, html_name = exportar_gantt_html(fig)
+            st.download_button("Exportar Gantt HTML", data=html_buffer.getvalue(), file_name=html_name, mime="text/html", use_container_width=True)
 
+        with st.expander("Ver tabla de programación", expanded=False):
+            st.dataframe(df_crono, use_container_width=True)
     else:
-        st.info("No hay actividades registradas todavía.")
+        st.info("No hay auditorías programadas todavía.")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
-# INSPECCIÓN
+# INSPECCION
 # =========================================================
-elif menu == "Inspección":
+elif menu == "Inspección 5S":
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">Inspección por bodega con evidencia fotográfica múltiple</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Inspección 5S por bodega</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-subtitle">Checklist técnico por bodega, evidencia fotográfica múltiple, severidad, cumplimiento y PDF ejecutivo.</div>', unsafe_allow_html=True)
 
-    st.markdown("### Selecciona una bodega")
-    cols = st.columns(4)
-    nombres = list(BODEGAS.keys())
-
-    for i, bod in enumerate(nombres):
-        with cols[i % 4]:
+    cols = st.columns(3)
+    for i, bod in enumerate(BODEGAS.keys()):
+        with cols[i % 3]:
             if st.button(bod, use_container_width=True):
                 st.session_state.selected_bodega = bod
 
     bodega_actual = st.session_state.selected_bodega
-    st.markdown(f"**Bodega seleccionada:** {bodega_actual}")
+    puntos = BODEGAS[bodega_actual]
+    st.markdown(f"#### Bodega seleccionada: **{bodega_actual}**")
+    st.markdown(f"Meta de cumplimiento: **>= {META_BODEGA:.0f}%** · Puntos de control: **{len(puntos)}**")
 
+    responsables_activos = get_responsables_activos()
+    nombres_responsables = [r["nombre"] for r in responsables_activos]
     c1, c2, c3 = st.columns(3)
     with c1:
         fecha_inspeccion = st.date_input("Fecha de inspección", value=date.today())
     with c2:
-        responsable = st.text_input("Responsable de inspección")
+        responsable = st.selectbox("Responsable de inspección", nombres_responsables if nombres_responsables else ["Sin responsable"])
     with c3:
         area = st.text_input("Área / proceso", value="Almacenamiento")
 
     st.markdown("---")
-    st.markdown(f"### Checklist técnico - {bodega_actual}")
-
-    puntos = BODEGAS[bodega_actual]
     items = []
-
     for idx, punto in enumerate(puntos, start=1):
         st.markdown('<div class="ins-card">', unsafe_allow_html=True)
-        box1, box2 = st.columns([1.1, 2.4])
-
+        box1, box2 = st.columns([0.9, 2.7])
         with box1:
             cumple = st.checkbox("Cumple", key=f"{bodega_actual}_{idx}_cumple")
+            severidad = st.selectbox(
+                "Severidad",
+                ["Sin novedad", "Baja", "Media", "Alta", "Crítica"],
+                index=0 if cumple else 2,
+                key=f"{bodega_actual}_{idx}_sev",
+            )
             fotos = st.file_uploader(
-                f"Fotos evidencia {idx}",
+                f"Evidencias {idx}",
                 type=["png", "jpg", "jpeg"],
                 accept_multiple_files=True,
-                key=f"{bodega_actual}_{idx}_foto"
+                key=f"{bodega_actual}_{idx}_foto",
             )
-
             if fotos:
-                with st.expander(f"Ver {len(fotos)} evidencia(s) cargada(s)", expanded=False):
+                with st.expander(f"Ver {len(fotos)} evidencia(s)", expanded=False):
                     for n_foto, foto_item in enumerate(fotos, start=1):
                         st.image(foto_item, caption=f"Evidencia {idx}.{n_foto}", use_container_width=True)
-
         with box2:
             st.markdown(f'<div class="punto-title">Punto {idx}</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="punto-sub">{punto}</div>', unsafe_allow_html=True)
             observacion = st.text_area(
-                "Observación",
+                "Observación / hallazgo / acción requerida",
                 key=f"{bodega_actual}_{idx}_obs",
                 height=105,
-                placeholder="Describe hallazgo, novedad, condición observada o acción requerida..."
+                placeholder="Describe hallazgo, novedad, condición observada o acción correctiva requerida...",
             )
+        st.markdown("</div>", unsafe_allow_html=True)
+        items.append({"punto": punto, "cumple": cumple, "severidad": severidad, "observacion": observacion, "foto_obj": fotos})
 
-        st.markdown('</div>', unsafe_allow_html=True)
+    if st.button("Guardar inspección y generar informe PDF ejecutivo", type="primary", use_container_width=True):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        folder = os.path.join(EVIDENCE_DIR, f"{bodega_actual.replace(' ', '_')}_{timestamp}")
+        os.makedirs(folder, exist_ok=True)
 
-        items.append({
-            "punto": punto,
-            "cumple": cumple,
-            "observacion": observacion,
-            "foto_obj": fotos
-        })
-
-    if st.button("Guardar inspección y generar informe PDF", type="primary", use_container_width=True):
-        if not responsable.strip():
-            st.error("Debes ingresar el responsable.")
-        else:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            folder = os.path.join(EVIDENCE_DIR, f"{bodega_actual.replace(' ', '_')}_{timestamp}")
-            os.makedirs(folder, exist_ok=True)
-
-            total = len(items)
-            cumplidos = 0
-            items_final = []
-
-            for i, item in enumerate(items, start=1):
-                if item["cumple"]:
-                    cumplidos += 1
-
-                foto_paths = []
-                if item["foto_obj"]:
-                    for j, foto_subida in enumerate(item["foto_obj"], start=1):
-                        foto_path = save_uploaded_image(foto_subida, folder, f"evidencia_{i}_{j}")
-                        if foto_path:
-                            foto_paths.append(foto_path)
-
-                items_final.append({
+        total = len(items)
+        cumplidos = 0
+        items_final = []
+        for i, item in enumerate(items, start=1):
+            if item["cumple"]:
+                cumplidos += 1
+            foto_paths = []
+            if item["foto_obj"]:
+                for j, foto_subida in enumerate(item["foto_obj"], start=1):
+                    foto_path = save_uploaded_image(foto_subida, folder, f"evidencia_{i}_{j}")
+                    if foto_path:
+                        foto_paths.append(foto_path)
+            items_final.append(
+                {
                     "punto": item["punto"],
                     "cumple": item["cumple"],
+                    "severidad": item["severidad"],
                     "observacion": item["observacion"],
-                    "fotos": foto_paths
-                })
+                    "fotos": foto_paths,
+                }
+            )
 
-            cumplimiento = (cumplidos / total) * 100 if total > 0 else 0
+        cumplimiento = (cumplidos / total) * 100 if total > 0 else 0
+        registro = {
+            "id": timestamp,
+            "fecha": str(fecha_inspeccion),
+            "semana": get_week_label(datetime.combine(fecha_inspeccion, datetime.min.time())),
+            "responsable": responsable,
+            "area": area,
+            "bodega": bodega_actual,
+            "cumplimiento": round(cumplimiento, 2),
+            "meta_bodega": META_BODEGA,
+            "items": items_final,
+        }
 
-            registro = {
-                "id": timestamp,
-                "fecha": str(fecha_inspeccion),
-                "responsable": responsable,
-                "area": area,
-                "bodega": bodega_actual,
-                "cumplimiento": round(cumplimiento, 2),
-                "items": items_final
-            }
+        st.session_state.inspecciones.append(registro)
+        safe_save_json(DB_PATH, st.session_state.inspecciones)
+        excel_file = append_to_excel(registro)
 
-            st.session_state.inspecciones.append(registro)
-            safe_save_json(DB_PATH, st.session_state.inspecciones)
+        try:
+            pdf_file = generar_pdf(registro)
+            st.success("Inspección guardada correctamente.")
+            st.markdown(cumplimiento_badge(cumplimiento), unsafe_allow_html=True)
+            with open(pdf_file, "rb") as f:
+                st.download_button("Descargar informe PDF ejecutivo", data=f.read(), file_name=os.path.basename(pdf_file), mime="application/pdf", use_container_width=True)
+        except Exception as e:
+            st.error(f"Error generando PDF: {e}")
 
-            excel_file = append_to_excel(registro)
-
-            try:
-                pdf_file = generar_pdf(registro)
-                st.success("Inspección guardada correctamente.")
-                st.markdown(cumplimiento_badge(cumplimiento), unsafe_allow_html=True)
-
-                with open(pdf_file, "rb") as f:
-                    st.download_button(
-                        "Descargar informe PDF",
-                        data=f.read(),
-                        file_name=os.path.basename(pdf_file),
-                        mime="application/pdf",
-                        use_container_width=True
-                    )
-            except Exception as e:
-                st.error(f"Error generando PDF: {e}")
-
-            if os.path.exists(excel_file):
-                with open(excel_file, "rb") as f:
-                    st.download_button(
-                        "Descargar histórico Excel",
-                        data=f.read(),
-                        file_name=os.path.basename(excel_file),
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        use_container_width=True
-                    )
+        if os.path.exists(excel_file):
+            with open(excel_file, "rb") as f:
+                st.download_button("Descargar histórico Excel", data=f.read(), file_name=os.path.basename(excel_file), mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
-# DASHBOARD
+# DASHBOARD EJECUTIVO
 # =========================================================
-elif menu == "Dashboard":
+elif menu == "Dashboard Ejecutivo":
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">Dashboard de cumplimiento 5S</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Dashboard ejecutivo de cumplimiento 5S</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-subtitle">Indicadores, ranking, tendencia, responsables, semáforos y hallazgos críticos.</div>', unsafe_allow_html=True)
 
     inspecciones = st.session_state.inspecciones
-
     if not inspecciones:
         st.info("Aún no hay inspecciones guardadas.")
     else:
-        resumen = []
-        for reg in inspecciones:
-            resumen.append({
-                "Fecha": reg["fecha"],
-                "Responsable": reg["responsable"],
-                "Bodega": reg["bodega"],
-                "Cumplimiento": reg["cumplimiento"]
-            })
+        df = build_inspection_dataframe(inspecciones)
+        df_items = build_items_dataframe(inspecciones)
+        promedio = float(df["Cumplimiento"].mean())
+        total_inspecciones = len(df)
+        bajo_meta = int((df["Cumplimiento"] < META_BODEGA).sum())
+        mejor_bodega = "-"
+        peor_bodega = "-"
+        if not df.empty:
+            df_bodega_aux = df.groupby("Bodega", as_index=False)["Cumplimiento"].mean()
+            mejor_bodega = df_bodega_aux.sort_values("Cumplimiento", ascending=False).iloc[0]["Bodega"]
+            peor_bodega = df_bodega_aux.sort_values("Cumplimiento", ascending=True).iloc[0]["Bodega"]
 
-        df = pd.DataFrame(resumen)
-        df["Fecha"] = pd.to_datetime(df["Fecha"])
-
-        c1, c2, c3 = st.columns(3)
-        promedio = df["Cumplimiento"].mean()
-
+        c1, c2, c3, c4, c5 = st.columns(5)
         with c1:
-            st.markdown(f'<div class="kpi-card"><div class="kpi-label">Promedio global</div><div class="kpi-value">{promedio:.1f}%</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="kpi-card"><div class="kpi-label">Promedio general</div><div class="kpi-value">{promedio:.1f}%</div><div class="kpi-note">Meta >= {META_GENERAL:.0f}%</div></div>', unsafe_allow_html=True)
         with c2:
-            st.markdown(f'<div class="kpi-card"><div class="kpi-label">Inspecciones</div><div class="kpi-value">{len(df)}</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="kpi-card"><div class="kpi-label">Inspecciones</div><div class="kpi-value">{total_inspecciones}</div><div class="kpi-note">Registros históricos</div></div>', unsafe_allow_html=True)
         with c3:
-            st.markdown(f'<div class="kpi-card"><div class="kpi-label">Estado</div><div style="margin-top:12px;">{cumplimiento_badge(promedio)}</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="kpi-card"><div class="kpi-label">Bajo meta</div><div class="kpi-value">{bajo_meta}</div><div class="kpi-note">Auditorías críticas</div></div>', unsafe_allow_html=True)
+        with c4:
+            st.markdown(f'<div class="kpi-card"><div class="kpi-label">Mejor bodega</div><div style="font-weight:900;color:#061f45;font-size:1.2rem;">{mejor_bodega}</div><div class="kpi-note">Ranking cumplimiento</div></div>', unsafe_allow_html=True)
+        with c5:
+            st.markdown(f'<div class="kpi-card"><div class="kpi-label">Bodega crítica</div><div style="font-weight:900;color:#061f45;font-size:1.2rem;">{peor_bodega}</div><div class="kpi-note">Prioridad de acción</div></div>', unsafe_allow_html=True)
 
-        st.markdown("#### Cumplimiento promedio por bodega")
-        df_bodega = df.groupby("Bodega", as_index=False)["Cumplimiento"].mean().sort_values("Cumplimiento", ascending=False)
+        st.markdown("---")
+        f1, f2, f3 = st.columns(3)
+        with f1:
+            bodega_filter = st.multiselect("Filtrar bodega", sorted(df["Bodega"].dropna().unique()))
+        with f2:
+            responsable_filter = st.multiselect("Filtrar responsable", sorted(df["Responsable"].dropna().unique()))
+        with f3:
+            estado_filter = st.multiselect("Filtrar estado", ["Excelente", "Atención", "Crítico"])
 
-        fig_bar = px.bar(
-            df_bodega,
-            x="Bodega",
-            y="Cumplimiento",
-            text="Cumplimiento",
-            color="Cumplimiento",
-            color_continuous_scale="Blues"
-        )
-        fig_bar.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
-        fig_bar.update_layout(
-            height=500,
-            plot_bgcolor="white",
-            paper_bgcolor="white",
-            margin=dict(l=25, r=25, t=40, b=25),
-            font=dict(color="#1f2937")
-        )
-        st.plotly_chart(fig_bar, use_container_width=True)
+        df_view = df.copy()
+        if bodega_filter:
+            df_view = df_view[df_view["Bodega"].isin(bodega_filter)]
+        if responsable_filter:
+            df_view = df_view[df_view["Responsable"].isin(responsable_filter)]
+        if estado_filter:
+            df_view = df_view[df_view["Estado"].isin(estado_filter)]
 
-        st.markdown("#### Tendencia histórica")
-        fig_line = px.line(
-            df.sort_values("Fecha"),
-            x="Fecha",
-            y="Cumplimiento",
-            color="Bodega",
-            markers=True
-        )
-        fig_line.update_layout(
-            height=450,
-            plot_bgcolor="white",
-            paper_bgcolor="white",
-            margin=dict(l=25, r=25, t=40, b=25),
-            font=dict(color="#1f2937")
-        )
-        st.plotly_chart(fig_line, use_container_width=True)
+        if df_view.empty:
+            st.warning("No hay datos para los filtros seleccionados.")
+        else:
+            left, right = st.columns([1.2, 1])
+            with left:
+                st.markdown("#### Cumplimiento promedio por bodega")
+                df_bodega = df_view.groupby("Bodega", as_index=False)["Cumplimiento"].mean().sort_values("Cumplimiento", ascending=False)
+                fig_bar = px.bar(
+                    df_bodega,
+                    x="Bodega",
+                    y="Cumplimiento",
+                    text="Cumplimiento",
+                    color="Cumplimiento",
+                    color_continuous_scale=["#FDECEC", "#FFF7DF", "#E9F8EF"],
+                    range_color=[0, 100],
+                )
+                fig_bar.add_hline(y=META_BODEGA, line_dash="dash", line_color="#061F45", annotation_text=f"Meta {META_BODEGA:.0f}%")
+                fig_bar.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+                fig_bar.update_layout(height=500, plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=25, r=25, t=40, b=25), font=dict(color="#1f2937"))
+                st.plotly_chart(fig_bar, use_container_width=True)
+            with right:
+                st.markdown("#### Gauge ejecutivo")
+                promedio_view = float(df_view["Cumplimiento"].mean())
+                fig_gauge = go.Figure(
+                    go.Indicator(
+                        mode="gauge+number+delta",
+                        value=promedio_view,
+                        delta={"reference": META_GENERAL},
+                        gauge={
+                            "axis": {"range": [0, 100]},
+                            "bar": {"color": "#156CC1"},
+                            "steps": [
+                                {"range": [0, 75], "color": "#FDECEC"},
+                                {"range": [75, 90], "color": "#FFF7DF"},
+                                {"range": [90, 100], "color": "#E9F8EF"},
+                            ],
+                            "threshold": {"line": {"color": "#061F45", "width": 4}, "thickness": 0.75, "value": META_GENERAL},
+                        },
+                        title={"text": "Cumplimiento filtrado"},
+                    )
+                )
+                fig_gauge.update_layout(height=500, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor="white")
+                st.plotly_chart(fig_gauge, use_container_width=True)
 
-        with st.expander("Ver histórico de inspecciones", expanded=False):
-            st.dataframe(df.sort_values("Fecha", ascending=False), use_container_width=True)
+            st.markdown("#### Tendencia histórica")
+            fig_line = px.line(
+                df_view.sort_values("Fecha"),
+                x="Fecha",
+                y="Cumplimiento",
+                color="Bodega",
+                markers=True,
+                hover_data=["Responsable", "Estado", "No conformes", "Observaciones"],
+            )
+            fig_line.add_hline(y=META_BODEGA, line_dash="dash", line_color="#061F45", annotation_text=f"Meta {META_BODEGA:.0f}%")
+            fig_line.update_layout(height=440, plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=25, r=25, t=40, b=25), font=dict(color="#1f2937"))
+            st.plotly_chart(fig_line, use_container_width=True)
+
+            st.markdown("#### Ranking de responsables")
+            df_resp = df_view.groupby("Responsable", as_index=False).agg(Cumplimiento=("Cumplimiento", "mean"), Auditorias=("Cumplimiento", "count")).sort_values("Cumplimiento", ascending=False)
+            fig_resp = px.bar(df_resp, x="Responsable", y="Cumplimiento", text="Cumplimiento", color="Cumplimiento", color_continuous_scale="Blues", hover_data=["Auditorias"])
+            fig_resp.add_hline(y=META_BODEGA, line_dash="dash", line_color="#061F45")
+            fig_resp.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+            fig_resp.update_layout(height=420, plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=25, r=25, t=40, b=25))
+            st.plotly_chart(fig_resp, use_container_width=True)
+
+            if not df_items.empty:
+                st.markdown("#### Hallazgos más repetidos")
+                incumplidos = df_items[~df_items["Cumple"]].copy()
+                if not incumplidos.empty:
+                    df_hallazgos = incumplidos.groupby("Punto", as_index=False).size().rename(columns={"size": "No conformidades"}).sort_values("No conformidades", ascending=False).head(10)
+                    fig_h = px.bar(df_hallazgos, x="No conformidades", y="Punto", orientation="h", text="No conformidades", color="No conformidades", color_continuous_scale="Reds")
+                    fig_h.update_layout(height=520, yaxis=dict(autorange="reversed"), plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=20, r=20, t=30, b=20))
+                    st.plotly_chart(fig_h, use_container_width=True)
+                else:
+                    st.success("No hay puntos no conformes registrados.")
+
+            with st.expander("Ver histórico ejecutivo", expanded=False):
+                st.dataframe(df_view.sort_values("Fecha", ascending=False), use_container_width=True)
+                buffer = export_dataframe_excel(df_view, "Dashboard")
+                st.download_button("Exportar dashboard filtrado Excel", data=buffer.getvalue(), file_name="Dashboard_5S_PRO.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
