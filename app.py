@@ -994,60 +994,65 @@ def mostrar_login():
     st.markdown(
         """
         <style>
+        /* LOGIN COMPACTO: sin sidebar, sin header y sin barras por desborde */
         [data-testid="stSidebar"] {display:none !important;}
-        #MainMenu {visibility:hidden;}
-        footer {visibility:hidden;}
-        header {visibility:hidden;}
-        .block-container {max-width:100% !important;padding:0 !important;margin:0 !important;}
+        #MainMenu, footer, header {visibility:hidden !important; height:0 !important;}
+        html, body, .stApp, [data-testid="stAppViewContainer"], .main{
+            overflow-x:hidden !important;
+        }
+        .block-container{
+            max-width:100% !important;
+            width:100% !important;
+            padding:0 !important;
+            margin:0 !important;
+        }
         .stApp{
             min-height:100vh;
             background:
-                radial-gradient(circle at 20% 12%, rgba(21,108,193,0.30), transparent 22%),
-                radial-gradient(circle at 86% 18%, rgba(6,31,69,0.25), transparent 24%),
+                radial-gradient(circle at 20% 12%, rgba(21,108,193,0.22), transparent 20%),
+                radial-gradient(circle at 86% 18%, rgba(6,31,69,0.18), transparent 22%),
                 linear-gradient(135deg, #eef4fb 0%, #dfeaf5 100%) !important;
         }
-        .login-shell{
+        .login-wrapper{
             min-height:100vh;
             display:flex;
             align-items:center;
             justify-content:center;
-            padding:22px;
+            padding:14px;
+            box-sizing:border-box;
         }
         .login-card-pro{
-            width:430px;
-            max-width:92vw;
-            background:rgba(255,255,255,0.94);
-            backdrop-filter:blur(16px);
-            border:1px solid rgba(255,255,255,0.82);
-            box-shadow:0 30px 70px rgba(6,31,69,0.22);
-            border-radius:32px;
-            padding:26px;
-            position:relative;
-            z-index:5;
+            width:360px;
+            max-width:calc(100vw - 28px);
+            background:rgba(255,255,255,0.96);
+            backdrop-filter:blur(14px);
+            border:1px solid rgba(255,255,255,0.86);
+            box-shadow:0 18px 45px rgba(6,31,69,0.18);
+            border-radius:24px;
+            padding:18px 20px 16px 20px;
+            box-sizing:border-box;
+            margin:0 auto;
         }
-        .login-card-pro input{
-            color:#061f45 !important;
-            background:#ffffff !important;
-            border:1px solid #c8d8e8 !important;
-            border-radius:14px !important;
-        }
-        .login-card-pro label, .login-card-pro p{
-            color:#061f45 !important;
-            font-weight:800 !important;
+        .login-logo{
+            display:flex;
+            justify-content:center;
+            margin-bottom:4px;
         }
         .login-title{
             text-align:center;
             color:#061f45;
-            font-size:2.1rem;
+            font-size:1.55rem;
             font-weight:900;
-            letter-spacing:-0.04em;
-            margin-top:8px;
+            letter-spacing:-0.035em;
+            margin:0 0 4px 0;
+            line-height:1.05;
         }
         .login-sub{
             text-align:center;
             color:#667085;
-            font-size:0.94rem;
-            margin-bottom:18px;
+            font-size:0.82rem;
+            line-height:1.25;
+            margin:0 0 12px 0;
         }
         div[data-testid="stForm"]{
             background:transparent !important;
@@ -1055,25 +1060,56 @@ def mostrar_login():
             box-shadow:none !important;
             padding:0 !important;
         }
+        div[data-testid="stForm"] label,
+        div[data-testid="stForm"] p{
+            color:#061f45 !important;
+            font-weight:800 !important;
+            font-size:0.78rem !important;
+        }
+        div[data-testid="stTextInput"]{
+            margin-bottom:2px !important;
+        }
+        div[data-testid="stTextInput"] input{
+            height:42px !important;
+            color:#061f45 !important;
+            background:#ffffff !important;
+            border:1px solid #c8d8e8 !important;
+            border-radius:12px !important;
+            font-size:0.92rem !important;
+        }
+        div[data-testid="stFormSubmitButton"] > button{
+            min-height:42px !important;
+            border-radius:13px !important;
+            margin-top:4px !important;
+            font-size:0.86rem !important;
+            background:linear-gradient(135deg,#156cc1 0%,#0b4fc4 100%) !important;
+            color:white !important;
+            border:none !important;
+        }
+        @media (max-height:620px){
+            .login-wrapper{align-items:flex-start; padding-top:14px;}
+            .login-card-pro{padding:14px 18px;}
+            .login-sub{display:none;}
+        }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('<div class="login-shell"><div class="login-card-pro">', unsafe_allow_html=True)
+    st.markdown('<div class="login-wrapper"><div class="login-card-pro">', unsafe_allow_html=True)
     if os.path.exists(LOGO_INOVA):
-        c1, c2, c3 = st.columns([1, 1, 1])
-        with c2:
-            st.image(LOGO_INOVA, width=86)
+        st.markdown('<div class="login-logo">', unsafe_allow_html=True)
+        st.image(LOGO_INOVA, width=70)
+        st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('<div class="login-title">5S INOVA PRO</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="login-sub">Centro ejecutivo de auditoria, control visual y excelencia operacional 5S</div>',
+        '<div class="login-sub">Auditoría, control visual y excelencia operacional 5S</div>',
         unsafe_allow_html=True,
     )
     with st.form("login_form", clear_on_submit=False):
         usuario = st.text_input("USUARIO", placeholder="Ingrese su usuario", key="login_usuario").strip().upper()
         clave = st.text_input("CONTRASEÑA", type="password", placeholder="Ingrese su contraseña", key="login_clave")
-        entrar = st.form_submit_button("ACCEDER AL SISTEMA", use_container_width=True)
+        entrar = st.form_submit_button("ACCEDER", use_container_width=True)
     if entrar:
         if usuario in USUARIOS_SISTEMA and USUARIOS_SISTEMA[usuario] == clave:
             st.session_state.autenticado = True
