@@ -246,27 +246,6 @@ if "color_secundario" not in st.session_state:
 if "color_alerta" not in st.session_state:
     st.session_state.color_alerta = "#D53333"
 
-if st.session_state.get("autenticado", False):
-    with st.expander("🎨 Personalizar colores del dashboard", expanded=False):
-        c1, c2, c3 = st.columns(3)
-
-        with c1:
-            st.session_state.color_primario = st.color_picker(
-                "Color principal",
-                st.session_state.color_primario
-            )
-
-        with c2:
-            st.session_state.color_secundario = st.color_picker(
-                "Color secundario",
-                st.session_state.color_secundario
-            )
-
-        with c3:
-            st.session_state.color_alerta = st.color_picker(
-                "Color alerta/meta",
-                st.session_state.color_alerta
-            )
 
 PALETA_VIVA = [
     st.session_state.color_primario,
@@ -286,6 +265,58 @@ ESCALA_CUMPLIMIENTO_VIVA = [
     [0.90, st.session_state.color_secundario],
     [1.00, st.session_state.color_primario],
 ]
+
+
+def render_selector_colores_dashboard():
+    st.markdown(
+        """
+        <div class="exec-card" style="margin-bottom:18px;">
+            <div style="font-weight:900;color:#061f45;font-size:1.05rem;">🎨 Personalizar colores de gráficas</div>
+            <div style="color:#667085;font-size:0.9rem;margin-top:4px;">Elige los colores que quieres usar en barras, líneas, gauge y escalas del dashboard.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.session_state.color_primario = st.color_picker(
+            "Color principal de barras y gauge",
+            st.session_state.color_primario,
+            key="picker_color_primario_dashboard",
+        )
+    with c2:
+        st.session_state.color_secundario = st.color_picker(
+            "Color secundario / cumplimiento alto",
+            st.session_state.color_secundario,
+            key="picker_color_secundario_dashboard",
+        )
+    with c3:
+        st.session_state.color_alerta = st.color_picker(
+            "Color alerta / bajo cumplimiento",
+            st.session_state.color_alerta,
+            key="picker_color_alerta_dashboard",
+        )
+
+    global PALETA_VIVA, ESCALA_CUMPLIMIENTO_VIVA
+    PALETA_VIVA = [
+        st.session_state.color_primario,
+        st.session_state.color_secundario,
+        "#00B8D9",
+        "#FF8A00",
+        "#7C3AED",
+        st.session_state.color_alerta,
+        "#2BB3A3",
+        "#F5C542",
+    ]
+    ESCALA_CUMPLIMIENTO_VIVA = [
+        [0.00, st.session_state.color_alerta],
+        [0.55, "#FF8A00"],
+        [0.75, "#F5C542"],
+        [0.90, st.session_state.color_secundario],
+        [1.00, st.session_state.color_primario],
+    ]
+
 
 # =========================================================
 # CSS NIVEL PRO
@@ -1373,13 +1404,13 @@ if menu == "Inicio Ejecutivo":
                 delta={"reference": META_GENERAL},
                 gauge={
                     "axis": {"range": [0, 100]},
-                    "bar": {"color": "#156CC1"},
+                    "bar": {"color": st.session_state.color_primario},
                     "steps": [
                         {"range": [0, 75], "color": "#FDECEC"},
                         {"range": [75, 90], "color": "#FFF7DF"},
                         {"range": [90, 100], "color": "#E9F8EF"},
                     ],
-                    "threshold": {"line": {"color": "#061F45", "width": 4}, "thickness": 0.75, "value": META_GENERAL},
+                    "threshold": {"line": {"color": st.session_state.color_alerta, "width": 4}, "thickness": 0.75, "value": META_GENERAL},
                 },
                 title={"text": "Promedio General 5S"},
             )
@@ -1746,6 +1777,8 @@ elif menu == "Dashboard Ejecutivo":
     st.markdown('<div class="section-title">Dashboard ejecutivo de cumplimiento 5S</div>', unsafe_allow_html=True)
     st.markdown('<div class="section-subtitle">Indicadores, ranking, tendencia, responsables, semáforos y hallazgos críticos.</div>', unsafe_allow_html=True)
 
+    render_selector_colores_dashboard()
+
     inspecciones = st.session_state.inspecciones
     if not inspecciones:
         st.info("Aún no hay inspecciones guardadas.")
@@ -1807,7 +1840,7 @@ elif menu == "Dashboard Ejecutivo":
                     color_continuous_scale=ESCALA_CUMPLIMIENTO_VIVA,
                     range_color=[0, 100],
                 )
-                fig_bar.add_hline(y=META_BODEGA, line_dash="dash", line_color="#061F45", annotation_text=f"Meta {META_BODEGA:.0f}%")
+                fig_bar.add_hline(y=META_BODEGA, line_dash="dash", line_color=st.session_state.color_alerta, annotation_text=f"Meta {META_BODEGA:.0f}%")
                 fig_bar.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
                 fig_bar.update_layout(height=500, plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=25, r=25, t=40, b=25), font=dict(color="#1f2937"), coloraxis_colorbar=dict(title="Cumplimiento"))
                 st.plotly_chart(fig_bar, use_container_width=True)
@@ -1821,13 +1854,13 @@ elif menu == "Dashboard Ejecutivo":
                         delta={"reference": META_GENERAL},
                         gauge={
                             "axis": {"range": [0, 100]},
-                            "bar": {"color": "#156CC1"},
+                            "bar": {"color": st.session_state.color_primario},
                             "steps": [
                                 {"range": [0, 75], "color": "#FDECEC"},
                                 {"range": [75, 90], "color": "#FFF7DF"},
                                 {"range": [90, 100], "color": "#E9F8EF"},
                             ],
-                            "threshold": {"line": {"color": "#061F45", "width": 4}, "thickness": 0.75, "value": META_GENERAL},
+                            "threshold": {"line": {"color": st.session_state.color_alerta, "width": 4}, "thickness": 0.75, "value": META_GENERAL},
                         },
                         title={"text": "Cumplimiento filtrado"},
                     )
@@ -1845,14 +1878,14 @@ elif menu == "Dashboard Ejecutivo":
                 markers=True,
                 hover_data=["Responsable", "Estado", "No conformes", "Observaciones"],
             )
-            fig_line.add_hline(y=META_BODEGA, line_dash="dash", line_color="#061F45", annotation_text=f"Meta {META_BODEGA:.0f}%")
+            fig_line.add_hline(y=META_BODEGA, line_dash="dash", line_color=st.session_state.color_alerta, annotation_text=f"Meta {META_BODEGA:.0f}%")
             fig_line.update_layout(height=440, plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=25, r=25, t=40, b=25), font=dict(color="#1f2937"))
             st.plotly_chart(fig_line, use_container_width=True)
 
             st.markdown("#### Ranking de responsables")
             df_resp = df_view.groupby("Responsable", as_index=False).agg(Cumplimiento=("Cumplimiento", "mean"), Auditorias=("Cumplimiento", "count")).sort_values("Cumplimiento", ascending=False)
             fig_resp = px.bar(df_resp, x="Responsable", y="Cumplimiento", text="Cumplimiento", color="Cumplimiento", color_continuous_scale=ESCALA_CUMPLIMIENTO_VIVA, hover_data=["Auditorias"])
-            fig_resp.add_hline(y=META_BODEGA, line_dash="dash", line_color="#061F45")
+            fig_resp.add_hline(y=META_BODEGA, line_dash="dash", line_color=st.session_state.color_alerta)
             fig_resp.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
             fig_resp.update_layout(height=420, plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=25, r=25, t=40, b=25))
             st.plotly_chart(fig_resp, use_container_width=True)
