@@ -267,55 +267,189 @@ ESCALA_CUMPLIMIENTO_VIVA = [
 ]
 
 
+def init_colores_graficas_dashboard():
+    """Inicializa una configuración independiente para cada gráfica del dashboard."""
+    defaults = {
+        "Barras por bodega": {
+            "principal": st.session_state.color_primario,
+            "alto": st.session_state.color_secundario,
+            "medio": "#F5C542",
+            "bajo": st.session_state.color_alerta,
+            "linea_meta": st.session_state.color_alerta,
+            "fondo": "#FFFFFF",
+            "texto": "#1F2937",
+        },
+        "Gauge ejecutivo": {
+            "barra": st.session_state.color_primario,
+            "rango_bajo": "#FDECEC",
+            "rango_medio": "#FFF7DF",
+            "rango_alto": "#E9F8EF",
+            "linea_meta": st.session_state.color_alerta,
+            "fondo": "#FFFFFF",
+            "texto": "#1F2937",
+        },
+        "Tendencia histórica": {
+            "linea_1": st.session_state.color_primario,
+            "linea_2": st.session_state.color_secundario,
+            "linea_3": "#00B8D9",
+            "linea_4": "#FF8A00",
+            "linea_5": "#7C3AED",
+            "linea_6": st.session_state.color_alerta,
+            "linea_meta": st.session_state.color_alerta,
+            "fondo": "#FFFFFF",
+            "texto": "#1F2937",
+        },
+        "Ranking responsables": {
+            "principal": st.session_state.color_primario,
+            "alto": st.session_state.color_secundario,
+            "medio": "#F5C542",
+            "bajo": st.session_state.color_alerta,
+            "linea_meta": st.session_state.color_alerta,
+            "fondo": "#FFFFFF",
+            "texto": "#1F2937",
+        },
+        "Hallazgos repetidos": {
+            "bajo": "#FFB703",
+            "medio": "#FF8A00",
+            "alto": "#D53333",
+            "critico": "#7C3AED",
+            "fondo": "#FFFFFF",
+            "texto": "#1F2937",
+        },
+    }
+    if "colores_graficas_dashboard" not in st.session_state:
+        st.session_state.colores_graficas_dashboard = defaults
+    else:
+        for grafica, config in defaults.items():
+            st.session_state.colores_graficas_dashboard.setdefault(grafica, {})
+            for key, value in config.items():
+                st.session_state.colores_graficas_dashboard[grafica].setdefault(key, value)
+
+
+def escala_desde_config(config):
+    return [
+        [0.00, config.get("bajo", st.session_state.color_alerta)],
+        [0.55, config.get("medio", "#F5C542")],
+        [0.90, config.get("alto", st.session_state.color_secundario)],
+        [1.00, config.get("principal", st.session_state.color_primario)],
+    ]
+
+
+def paleta_tendencia_desde_config(config):
+    return [
+        config.get("linea_1", st.session_state.color_primario),
+        config.get("linea_2", st.session_state.color_secundario),
+        config.get("linea_3", "#00B8D9"),
+        config.get("linea_4", "#FF8A00"),
+        config.get("linea_5", "#7C3AED"),
+        config.get("linea_6", st.session_state.color_alerta),
+        "#2BB3A3",
+        "#F5C542",
+    ]
+
+
 def render_selector_colores_dashboard():
+    """Muestra un selector de gráfica y un toolbox específico para editar sus colores."""
+    init_colores_graficas_dashboard()
+
     st.markdown(
         """
         <div class="exec-card" style="margin-bottom:18px;">
-            <div style="font-weight:900;color:#061f45;font-size:1.05rem;">🎨 Personalizar colores de gráficas</div>
-            <div style="color:#667085;font-size:0.9rem;margin-top:4px;">Elige los colores que quieres usar en barras, líneas, gauge y escalas del dashboard.</div>
+            <div style="font-weight:900;color:#061f45;font-size:1.05rem;">🎨 Toolbox de colores por gráfica</div>
+            <div style="color:#667085;font-size:0.9rem;margin-top:4px;">Selecciona una gráfica y edita únicamente sus colores específicos sin afectar las demás.</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.session_state.color_primario = st.color_picker(
-            "Color principal de barras y gauge",
-            st.session_state.color_primario,
-            key="picker_color_primario_dashboard",
-        )
-    with c2:
-        st.session_state.color_secundario = st.color_picker(
-            "Color secundario / cumplimiento alto",
-            st.session_state.color_secundario,
-            key="picker_color_secundario_dashboard",
-        )
-    with c3:
-        st.session_state.color_alerta = st.color_picker(
-            "Color alerta / bajo cumplimiento",
-            st.session_state.color_alerta,
-            key="picker_color_alerta_dashboard",
-        )
+    graficas = list(st.session_state.colores_graficas_dashboard.keys())
+    grafica_seleccionada = st.selectbox(
+        "Selecciona la gráfica que deseas editar",
+        graficas,
+        key="grafica_dashboard_seleccionada",
+    )
+    config = st.session_state.colores_graficas_dashboard[grafica_seleccionada]
 
-    global PALETA_VIVA, ESCALA_CUMPLIMIENTO_VIVA
-    PALETA_VIVA = [
-        st.session_state.color_primario,
-        st.session_state.color_secundario,
-        "#00B8D9",
-        "#FF8A00",
-        "#7C3AED",
-        st.session_state.color_alerta,
-        "#2BB3A3",
-        "#F5C542",
-    ]
-    ESCALA_CUMPLIMIENTO_VIVA = [
-        [0.00, st.session_state.color_alerta],
-        [0.55, "#FF8A00"],
-        [0.75, "#F5C542"],
-        [0.90, st.session_state.color_secundario],
-        [1.00, st.session_state.color_primario],
-    ]
+    with st.expander(f"Toolbox activo: {grafica_seleccionada}", expanded=True):
+        st.caption("Los cambios se aplican inmediatamente a la gráfica seleccionada.")
+
+        if grafica_seleccionada in ["Barras por bodega", "Ranking responsables"]:
+            c1, c2, c3, c4 = st.columns(4)
+            with c1:
+                config["principal"] = st.color_picker("Color máximo / principal", config["principal"], key=f"{grafica_seleccionada}_principal")
+            with c2:
+                config["alto"] = st.color_picker("Color alto cumplimiento", config["alto"], key=f"{grafica_seleccionada}_alto")
+            with c3:
+                config["medio"] = st.color_picker("Color medio cumplimiento", config["medio"], key=f"{grafica_seleccionada}_medio")
+            with c4:
+                config["bajo"] = st.color_picker("Color bajo cumplimiento", config["bajo"], key=f"{grafica_seleccionada}_bajo")
+            c5, c6, c7 = st.columns(3)
+            with c5:
+                config["linea_meta"] = st.color_picker("Color línea meta", config["linea_meta"], key=f"{grafica_seleccionada}_linea_meta")
+            with c6:
+                config["fondo"] = st.color_picker("Color fondo gráfica", config["fondo"], key=f"{grafica_seleccionada}_fondo")
+            with c7:
+                config["texto"] = st.color_picker("Color texto", config["texto"], key=f"{grafica_seleccionada}_texto")
+
+        elif grafica_seleccionada == "Gauge ejecutivo":
+            c1, c2, c3, c4 = st.columns(4)
+            with c1:
+                config["barra"] = st.color_picker("Color barra gauge", config["barra"], key="gauge_barra_color")
+            with c2:
+                config["rango_bajo"] = st.color_picker("Rango bajo", config["rango_bajo"], key="gauge_rango_bajo")
+            with c3:
+                config["rango_medio"] = st.color_picker("Rango medio", config["rango_medio"], key="gauge_rango_medio")
+            with c4:
+                config["rango_alto"] = st.color_picker("Rango alto", config["rango_alto"], key="gauge_rango_alto")
+            c5, c6, c7 = st.columns(3)
+            with c5:
+                config["linea_meta"] = st.color_picker("Color línea meta", config["linea_meta"], key="gauge_linea_meta")
+            with c6:
+                config["fondo"] = st.color_picker("Color fondo gráfica", config["fondo"], key="gauge_fondo")
+            with c7:
+                config["texto"] = st.color_picker("Color texto", config["texto"], key="gauge_texto")
+
+        elif grafica_seleccionada == "Tendencia histórica":
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                config["linea_1"] = st.color_picker("Color serie 1", config["linea_1"], key="tend_linea_1")
+                config["linea_4"] = st.color_picker("Color serie 4", config["linea_4"], key="tend_linea_4")
+            with c2:
+                config["linea_2"] = st.color_picker("Color serie 2", config["linea_2"], key="tend_linea_2")
+                config["linea_5"] = st.color_picker("Color serie 5", config["linea_5"], key="tend_linea_5")
+            with c3:
+                config["linea_3"] = st.color_picker("Color serie 3", config["linea_3"], key="tend_linea_3")
+                config["linea_6"] = st.color_picker("Color serie 6", config["linea_6"], key="tend_linea_6")
+            c4, c5, c6 = st.columns(3)
+            with c4:
+                config["linea_meta"] = st.color_picker("Color línea meta", config["linea_meta"], key="tend_linea_meta")
+            with c5:
+                config["fondo"] = st.color_picker("Color fondo gráfica", config["fondo"], key="tend_fondo")
+            with c6:
+                config["texto"] = st.color_picker("Color texto", config["texto"], key="tend_texto")
+
+        elif grafica_seleccionada == "Hallazgos repetidos":
+            c1, c2, c3, c4 = st.columns(4)
+            with c1:
+                config["bajo"] = st.color_picker("Color nivel bajo", config["bajo"], key="hall_bajo")
+            with c2:
+                config["medio"] = st.color_picker("Color nivel medio", config["medio"], key="hall_medio")
+            with c3:
+                config["alto"] = st.color_picker("Color nivel alto", config["alto"], key="hall_alto")
+            with c4:
+                config["critico"] = st.color_picker("Color nivel crítico", config["critico"], key="hall_critico")
+            c5, c6 = st.columns(2)
+            with c5:
+                config["fondo"] = st.color_picker("Color fondo gráfica", config["fondo"], key="hall_fondo")
+            with c6:
+                config["texto"] = st.color_picker("Color texto", config["texto"], key="hall_texto")
+
+        if st.button("Restablecer colores de esta gráfica", key=f"reset_{grafica_seleccionada}", use_container_width=True):
+            st.session_state.colores_graficas_dashboard.pop(grafica_seleccionada, None)
+            init_colores_graficas_dashboard()
+            st.rerun()
+
+    return st.session_state.colores_graficas_dashboard
 
 
 # =========================================================
@@ -1777,7 +1911,7 @@ elif menu == "Dashboard Ejecutivo":
     st.markdown('<div class="section-title">Dashboard ejecutivo de cumplimiento 5S</div>', unsafe_allow_html=True)
     st.markdown('<div class="section-subtitle">Indicadores, ranking, tendencia, responsables, semáforos y hallazgos críticos.</div>', unsafe_allow_html=True)
 
-    render_selector_colores_dashboard()
+    colores_graficas = render_selector_colores_dashboard()
 
     inspecciones = st.session_state.inspecciones
     if not inspecciones:
@@ -1837,12 +1971,12 @@ elif menu == "Dashboard Ejecutivo":
                     y="Cumplimiento",
                     text="Cumplimiento",
                     color="Cumplimiento",
-                    color_continuous_scale=ESCALA_CUMPLIMIENTO_VIVA,
+                    color_continuous_scale=escala_desde_config(colores_graficas["Barras por bodega"]),
                     range_color=[0, 100],
                 )
-                fig_bar.add_hline(y=META_BODEGA, line_dash="dash", line_color=st.session_state.color_alerta, annotation_text=f"Meta {META_BODEGA:.0f}%")
+                fig_bar.add_hline(y=META_BODEGA, line_dash="dash", line_color=colores_graficas["Barras por bodega"].get("linea_meta", st.session_state.color_alerta), annotation_text=f"Meta {META_BODEGA:.0f}%")
                 fig_bar.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
-                fig_bar.update_layout(height=500, plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=25, r=25, t=40, b=25), font=dict(color="#1f2937"), coloraxis_colorbar=dict(title="Cumplimiento"))
+                fig_bar.update_layout(height=500, plot_bgcolor=colores_graficas["Barras por bodega"].get("fondo", "#FFFFFF"), paper_bgcolor=colores_graficas["Barras por bodega"].get("fondo", "#FFFFFF"), margin=dict(l=25, r=25, t=40, b=25), font=dict(color=colores_graficas["Barras por bodega"].get("texto", "#1f2937")), coloraxis_colorbar=dict(title="Cumplimiento"))
                 st.plotly_chart(fig_bar, use_container_width=True)
             with right:
                 st.markdown("#### Gauge ejecutivo")
@@ -1854,18 +1988,18 @@ elif menu == "Dashboard Ejecutivo":
                         delta={"reference": META_GENERAL},
                         gauge={
                             "axis": {"range": [0, 100]},
-                            "bar": {"color": st.session_state.color_primario},
+                            "bar": {"color": colores_graficas["Gauge ejecutivo"].get("barra", st.session_state.color_primario)},
                             "steps": [
-                                {"range": [0, 75], "color": "#FDECEC"},
-                                {"range": [75, 90], "color": "#FFF7DF"},
-                                {"range": [90, 100], "color": "#E9F8EF"},
+                                {"range": [0, 75], "color": colores_graficas["Gauge ejecutivo"].get("rango_bajo", "#FDECEC")},
+                                {"range": [75, 90], "color": colores_graficas["Gauge ejecutivo"].get("rango_medio", "#FFF7DF")},
+                                {"range": [90, 100], "color": colores_graficas["Gauge ejecutivo"].get("rango_alto", "#E9F8EF")},
                             ],
-                            "threshold": {"line": {"color": st.session_state.color_alerta, "width": 4}, "thickness": 0.75, "value": META_GENERAL},
+                            "threshold": {"line": {"color": colores_graficas["Gauge ejecutivo"].get("linea_meta", st.session_state.color_alerta), "width": 4}, "thickness": 0.75, "value": META_GENERAL},
                         },
                         title={"text": "Cumplimiento filtrado"},
                     )
                 )
-                fig_gauge.update_layout(height=500, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor="white")
+                fig_gauge.update_layout(height=500, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor=colores_graficas["Gauge ejecutivo"].get("fondo", "#FFFFFF"), font=dict(color=colores_graficas["Gauge ejecutivo"].get("texto", "#1f2937")))
                 st.plotly_chart(fig_gauge, use_container_width=True)
 
             st.markdown("#### Tendencia histórica")
@@ -1874,20 +2008,20 @@ elif menu == "Dashboard Ejecutivo":
                 x="Fecha",
                 y="Cumplimiento",
                 color="Bodega",
-                color_discrete_sequence=PALETA_VIVA,
+                color_discrete_sequence=paleta_tendencia_desde_config(colores_graficas["Tendencia histórica"]),
                 markers=True,
                 hover_data=["Responsable", "Estado", "No conformes", "Observaciones"],
             )
-            fig_line.add_hline(y=META_BODEGA, line_dash="dash", line_color=st.session_state.color_alerta, annotation_text=f"Meta {META_BODEGA:.0f}%")
-            fig_line.update_layout(height=440, plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=25, r=25, t=40, b=25), font=dict(color="#1f2937"))
+            fig_line.add_hline(y=META_BODEGA, line_dash="dash", line_color=colores_graficas["Tendencia histórica"].get("linea_meta", st.session_state.color_alerta), annotation_text=f"Meta {META_BODEGA:.0f}%")
+            fig_line.update_layout(height=440, plot_bgcolor=colores_graficas["Tendencia histórica"].get("fondo", "#FFFFFF"), paper_bgcolor=colores_graficas["Tendencia histórica"].get("fondo", "#FFFFFF"), margin=dict(l=25, r=25, t=40, b=25), font=dict(color=colores_graficas["Tendencia histórica"].get("texto", "#1f2937")))
             st.plotly_chart(fig_line, use_container_width=True)
 
             st.markdown("#### Ranking de responsables")
             df_resp = df_view.groupby("Responsable", as_index=False).agg(Cumplimiento=("Cumplimiento", "mean"), Auditorias=("Cumplimiento", "count")).sort_values("Cumplimiento", ascending=False)
-            fig_resp = px.bar(df_resp, x="Responsable", y="Cumplimiento", text="Cumplimiento", color="Cumplimiento", color_continuous_scale=ESCALA_CUMPLIMIENTO_VIVA, hover_data=["Auditorias"])
-            fig_resp.add_hline(y=META_BODEGA, line_dash="dash", line_color=st.session_state.color_alerta)
+            fig_resp = px.bar(df_resp, x="Responsable", y="Cumplimiento", text="Cumplimiento", color="Cumplimiento", color_continuous_scale=escala_desde_config(colores_graficas["Ranking responsables"]), hover_data=["Auditorias"])
+            fig_resp.add_hline(y=META_BODEGA, line_dash="dash", line_color=colores_graficas["Ranking responsables"].get("linea_meta", st.session_state.color_alerta))
             fig_resp.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
-            fig_resp.update_layout(height=420, plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=25, r=25, t=40, b=25))
+            fig_resp.update_layout(height=420, plot_bgcolor=colores_graficas["Ranking responsables"].get("fondo", "#FFFFFF"), paper_bgcolor=colores_graficas["Ranking responsables"].get("fondo", "#FFFFFF"), margin=dict(l=25, r=25, t=40, b=25), font=dict(color=colores_graficas["Ranking responsables"].get("texto", "#1f2937")))
             st.plotly_chart(fig_resp, use_container_width=True)
 
             if not df_items.empty:
@@ -1895,8 +2029,8 @@ elif menu == "Dashboard Ejecutivo":
                 incumplidos = df_items[~df_items["Cumple"]].copy()
                 if not incumplidos.empty:
                     df_hallazgos = incumplidos.groupby("Punto", as_index=False).size().rename(columns={"size": "No conformidades"}).sort_values("No conformidades", ascending=False).head(10)
-                    fig_h = px.bar(df_hallazgos, x="No conformidades", y="Punto", orientation="h", text="No conformidades", color="No conformidades", color_continuous_scale=["#FFB703", "#FF8A00", "#D53333", "#7C3AED"])
-                    fig_h.update_layout(height=520, yaxis=dict(autorange="reversed"), plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=20, r=20, t=30, b=20))
+                    fig_h = px.bar(df_hallazgos, x="No conformidades", y="Punto", orientation="h", text="No conformidades", color="No conformidades", color_continuous_scale=[colores_graficas["Hallazgos repetidos"].get("bajo", "#FFB703"), colores_graficas["Hallazgos repetidos"].get("medio", "#FF8A00"), colores_graficas["Hallazgos repetidos"].get("alto", "#D53333"), colores_graficas["Hallazgos repetidos"].get("critico", "#7C3AED")])
+                    fig_h.update_layout(height=520, yaxis=dict(autorange="reversed"), plot_bgcolor=colores_graficas["Hallazgos repetidos"].get("fondo", "#FFFFFF"), paper_bgcolor=colores_graficas["Hallazgos repetidos"].get("fondo", "#FFFFFF"), margin=dict(l=20, r=20, t=30, b=20), font=dict(color=colores_graficas["Hallazgos repetidos"].get("texto", "#1f2937")))
                     st.plotly_chart(fig_h, use_container_width=True)
                 else:
                     st.success("No hay puntos no conformes registrados.")
