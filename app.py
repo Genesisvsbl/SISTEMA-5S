@@ -205,6 +205,35 @@ BODEGAS = {
 
 ESTADOS_CRONOGRAMA = ["Programada", "En ejecución", "Finalizada", "Vencida", "Crítica"]
 
+# Paleta visual viva alineada con la interfaz INOVA
+PALETA_VIVA = [
+    "#156CC1",  # azul INOVA
+    "#00B8D9",  # cyan vivo
+    "#13A35B",  # verde
+    "#FF8A00",  # naranja
+    "#7C3AED",  # violeta
+    "#D53333",  # rojo
+    "#2BB3A3",  # teal
+    "#F5C542",  # amarillo
+]
+
+ESCALA_CUMPLIMIENTO_VIVA = [
+    [0.00, "#D53333"],
+    [0.55, "#FF8A00"],
+    [0.75, "#F5C542"],
+    [0.90, "#13A35B"],
+    [1.00, "#156CC1"],
+]
+
+COLOR_ESTADO_VIVO = {
+    "Programada": "#156CC1",
+    "En ejecución": "#FF8A00",
+    "Finalizada": "#13A35B",
+    "Vencida": "#667085",
+    "Crítica": "#D53333",
+}
+
+
 # =========================================================
 # CSS NIVEL PRO
 # =========================================================
@@ -987,12 +1016,24 @@ def mostrar_login():
         .login-card-pro{
             width:430px;
             max-width:92vw;
-            background:rgba(255,255,255,0.88);
+            background:rgba(255,255,255,0.94);
             backdrop-filter:blur(16px);
-            border:1px solid rgba(255,255,255,0.72);
+            border:1px solid rgba(255,255,255,0.82);
             box-shadow:0 30px 70px rgba(6,31,69,0.22);
             border-radius:32px;
             padding:26px;
+            position:relative;
+            z-index:5;
+        }
+        .login-card-pro input{
+            color:#061f45 !important;
+            background:#ffffff !important;
+            border:1px solid #c8d8e8 !important;
+            border-radius:14px !important;
+        }
+        .login-card-pro label, .login-card-pro p{
+            color:#061f45 !important;
+            font-weight:800 !important;
         }
         .login-title{
             text-align:center;
@@ -1030,8 +1071,8 @@ def mostrar_login():
         unsafe_allow_html=True,
     )
     with st.form("login_form", clear_on_submit=False):
-        usuario = st.text_input("USUARIO", placeholder="Ingrese su usuario").strip().upper()
-        clave = st.text_input("CONTRASEÑA", type="password", placeholder="Ingrese su contraseña")
+        usuario = st.text_input("USUARIO", placeholder="Ingrese su usuario", key="login_usuario").strip().upper()
+        clave = st.text_input("CONTRASEÑA", type="password", placeholder="Ingrese su contraseña", key="login_clave")
         entrar = st.form_submit_button("ACCEDER AL SISTEMA", use_container_width=True)
     if entrar:
         if usuario in USUARIOS_SISTEMA and USUARIOS_SISTEMA[usuario] == clave:
@@ -1338,64 +1379,83 @@ elif menu == "Cronograma 5S":
 
     if st.session_state.cronograma:
         df_crono = pd.DataFrame(st.session_state.cronograma)
-        df_crono["fecha_inicio"] = pd.to_datetime(df_crono["fecha_inicio"])
-        df_crono["fecha_fin"] = pd.to_datetime(df_crono["fecha_fin"])
-        df_crono["estado_visual"] = df_crono.apply(lambda row: infer_schedule_status(row.to_dict()), axis=1)
-        df_crono["etiqueta"] = df_crono["responsable"].astype(str)
-        df_crono["dia"] = df_crono["fecha_inicio"].dt.strftime("%A %d %b")
+        df_crono["fecha_inicio"] = pd.to_datetime(df_crono.get("fecha_inicio"), errors="coerce")
+        df_crono["fecha_fin"] = pd.to_datetime(df_crono.get("fecha_fin"), errors="coerce")
+        df_crono = df_crono.dropna(subset=["fecha_inicio", "fecha_fin"]).copy()
 
-        st.markdown("#### Cronograma visual ejecutivo")
-        fig = px.timeline(
-            df_crono,
-            x_start="fecha_inicio",
-            x_end="fecha_fin",
-            y="bodega",
-            color="estado_visual",
-            text="etiqueta",
-            hover_data=["actividad", "responsable", "dia", "prioridad", "meta_bodega", "observacion"],
-            color_discrete_map={
-                "Programada": "#156CC1",
-                "En ejecución": "#D99B00",
-                "Finalizada": "#13A35B",
-                "Vencida": "#667085",
-                "Crítica": "#D53333",
-            },
+        # Evita ValueError en Plotly cuando hay fechas iguales, nulas o invertidas.
+        df_crono.loc[df_crono["fecha_fin"] <= df_crono["fecha_inicio"], "fecha_fin"] = (
+            df_crono.loc[df_crono["fecha_fin"] <= df_crono["fecha_inicio"], "fecha_inicio"] + pd.Timedelta(days=1)
         )
-        fig.update_yaxes(autorange="reversed", title="Bodega", showgrid=True, gridcolor="#eef3f9")
-        fig.update_xaxes(title="Fecha", showgrid=True, gridcolor="#e5edf6", tickformat="%a %d %b")
-        fig.update_traces(textposition="inside", insidetextanchor="middle", marker_line_color="white", marker_line_width=1.6)
-        fig.update_layout(
-            height=720,
-            title="Cronograma 5S por bodega, día y responsable",
-            plot_bgcolor="white",
-            paper_bgcolor="white",
-            legend_title="Estado",
-            font=dict(size=13, color="#1f2937"),
-            margin=dict(l=150, r=40, t=72, b=45),
-            title_font=dict(size=22, color="#061f45"),
-        )
-        st.plotly_chart(fig, use_container_width=True)
 
-        cex1, cex2, cex3 = st.columns(3)
-        with cex1:
-            buffer = export_dataframe_excel(df_crono, "Cronograma")
-            st.download_button(
-                "Exportar cronograma Excel",
-                data=buffer.getvalue(),
-                file_name=f"Cronograma_5S_PRO_{get_week_label()}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
+        fig = None
+        if df_crono.empty:
+            st.warning("No hay actividades válidas para graficar. Revisa las fechas del cronograma.")
+        else:
+            df_crono["estado_visual"] = df_crono.apply(lambda row: infer_schedule_status(row.to_dict()), axis=1)
+            df_crono["etiqueta"] = df_crono["responsable"].fillna("Sin responsable").astype(str)
+            df_crono["dia"] = df_crono["fecha_inicio"].dt.strftime("%A %d %b")
+
+            st.markdown("#### Cronograma visual ejecutivo")
+            fig = px.timeline(
+                df_crono,
+                x_start="fecha_inicio",
+                x_end="fecha_fin",
+                y="bodega",
+                color="estado_visual",
+                text="etiqueta",
+                hover_data=["actividad", "responsable", "dia", "prioridad", "meta_bodega", "observacion"],
+                color_discrete_map=COLOR_ESTADO_VIVO,
             )
-        with cex2:
-            try:
-                gantt_png, gantt_name = guardar_gantt_png(fig)
-                with open(gantt_png, "rb") as f:
-                    st.download_button("Exportar imagen Gantt", data=f.read(), file_name=gantt_name, mime="image/png", use_container_width=True)
-            except Exception:
-                st.info("PNG no disponible en este entorno. Usa HTML interactivo.")
-        with cex3:
-            html_buffer, html_name = exportar_gantt_html(fig)
-            st.download_button("Exportar Gantt HTML", data=html_buffer.getvalue(), file_name=html_name, mime="text/html", use_container_width=True)
+            fig.update_yaxes(autorange="reversed", title="Bodega", showgrid=True, gridcolor="#e5edf6")
+            fig.update_xaxes(title="Fecha", showgrid=True, gridcolor="#dbe6f1", tickformat="%a %d %b")
+            fig.update_traces(textposition="inside", insidetextanchor="middle", marker_line_color="white", marker_line_width=2.2, opacity=0.96)
+            fig.update_layout(
+                height=720,
+                title="Cronograma 5S por bodega, día y responsable",
+                plot_bgcolor="#ffffff",
+                paper_bgcolor="#ffffff",
+                legend_title="Estado",
+                font=dict(size=13, color="#1f2937"),
+                margin=dict(l=150, r=40, t=72, b=45),
+                title_font=dict(size=22, color="#061f45"),
+                colorway=PALETA_VIVA,
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+        if fig is not None:
+            cex1, cex2, cex3 = st.columns(3)
+            with cex1:
+                buffer = export_dataframe_excel(df_crono, "Cronograma")
+                st.download_button(
+                    "Exportar cronograma Excel",
+                    data=buffer.getvalue(),
+                    file_name=f"Cronograma_5S_PRO_{get_week_label()}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True,
+                )
+            with cex2:
+                try:
+                    gantt_png, gantt_name = guardar_gantt_png(fig)
+                    with open(gantt_png, "rb") as f:
+                        st.download_button(
+                            "Exportar imagen Gantt",
+                            data=f.read(),
+                            file_name=gantt_name,
+                            mime="image/png",
+                            use_container_width=True,
+                        )
+                except Exception:
+                    st.info("PNG no disponible en este entorno. Usa HTML interactivo.")
+            with cex3:
+                html_buffer, html_name = exportar_gantt_html(fig)
+                st.download_button(
+                    "Exportar Gantt HTML",
+                    data=html_buffer.getvalue(),
+                    file_name=html_name,
+                    mime="text/html",
+                    use_container_width=True,
+                )
 
         with st.expander("Ver tabla de programación", expanded=False):
             st.dataframe(df_crono, use_container_width=True)
@@ -1593,12 +1653,12 @@ elif menu == "Dashboard Ejecutivo":
                     y="Cumplimiento",
                     text="Cumplimiento",
                     color="Cumplimiento",
-                    color_continuous_scale=["#FDECEC", "#FFF7DF", "#E9F8EF"],
+                    color_continuous_scale=ESCALA_CUMPLIMIENTO_VIVA,
                     range_color=[0, 100],
                 )
                 fig_bar.add_hline(y=META_BODEGA, line_dash="dash", line_color="#061F45", annotation_text=f"Meta {META_BODEGA:.0f}%")
                 fig_bar.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
-                fig_bar.update_layout(height=500, plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=25, r=25, t=40, b=25), font=dict(color="#1f2937"))
+                fig_bar.update_layout(height=500, plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=25, r=25, t=40, b=25), font=dict(color="#1f2937"), coloraxis_colorbar=dict(title="Cumplimiento"))
                 st.plotly_chart(fig_bar, use_container_width=True)
             with right:
                 st.markdown("#### Gauge ejecutivo")
@@ -1630,6 +1690,7 @@ elif menu == "Dashboard Ejecutivo":
                 x="Fecha",
                 y="Cumplimiento",
                 color="Bodega",
+                color_discrete_sequence=PALETA_VIVA,
                 markers=True,
                 hover_data=["Responsable", "Estado", "No conformes", "Observaciones"],
             )
@@ -1639,7 +1700,7 @@ elif menu == "Dashboard Ejecutivo":
 
             st.markdown("#### Ranking de responsables")
             df_resp = df_view.groupby("Responsable", as_index=False).agg(Cumplimiento=("Cumplimiento", "mean"), Auditorias=("Cumplimiento", "count")).sort_values("Cumplimiento", ascending=False)
-            fig_resp = px.bar(df_resp, x="Responsable", y="Cumplimiento", text="Cumplimiento", color="Cumplimiento", color_continuous_scale="Blues", hover_data=["Auditorias"])
+            fig_resp = px.bar(df_resp, x="Responsable", y="Cumplimiento", text="Cumplimiento", color="Cumplimiento", color_continuous_scale=ESCALA_CUMPLIMIENTO_VIVA, hover_data=["Auditorias"])
             fig_resp.add_hline(y=META_BODEGA, line_dash="dash", line_color="#061F45")
             fig_resp.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
             fig_resp.update_layout(height=420, plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=25, r=25, t=40, b=25))
@@ -1650,7 +1711,7 @@ elif menu == "Dashboard Ejecutivo":
                 incumplidos = df_items[~df_items["Cumple"]].copy()
                 if not incumplidos.empty:
                     df_hallazgos = incumplidos.groupby("Punto", as_index=False).size().rename(columns={"size": "No conformidades"}).sort_values("No conformidades", ascending=False).head(10)
-                    fig_h = px.bar(df_hallazgos, x="No conformidades", y="Punto", orientation="h", text="No conformidades", color="No conformidades", color_continuous_scale="Reds")
+                    fig_h = px.bar(df_hallazgos, x="No conformidades", y="Punto", orientation="h", text="No conformidades", color="No conformidades", color_continuous_scale=["#FFB703", "#FF8A00", "#D53333", "#7C3AED"])
                     fig_h.update_layout(height=520, yaxis=dict(autorange="reversed"), plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=20, r=20, t=30, b=20))
                     st.plotly_chart(fig_h, use_container_width=True)
                 else:
