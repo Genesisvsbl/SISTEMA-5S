@@ -225,6 +225,7 @@ ESCALA_CUMPLIMIENTO_VIVA = [
     [1.00, "#156CC1"],
 ]
 
+
 COLOR_ESTADO_VIVO = {
     "Programada": "#156CC1",
     "En ejecución": "#FF8A00",
@@ -233,6 +234,54 @@ COLOR_ESTADO_VIVO = {
     "Crítica": "#D53333",
 }
 
+
+
+# =========================================================
+# CONFIGURACION VISUAL PERSONALIZABLE
+# =========================================================
+if "color_primario" not in st.session_state:
+    st.session_state.color_primario = "#156CC1"
+if "color_secundario" not in st.session_state:
+    st.session_state.color_secundario = "#13A35B"
+if "color_alerta" not in st.session_state:
+    st.session_state.color_alerta = "#D53333"
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("🎨 Colores gráficas")
+
+st.session_state.color_primario = st.sidebar.color_picker(
+    "Color principal",
+    st.session_state.color_primario
+)
+
+st.session_state.color_secundario = st.sidebar.color_picker(
+    "Color secundario",
+    st.session_state.color_secundario
+)
+
+st.session_state.color_alerta = st.sidebar.color_picker(
+    "Color alerta/meta",
+    st.session_state.color_alerta
+)
+
+PALETA_VIVA = [
+    st.session_state.color_primario,
+    st.session_state.color_secundario,
+    "#00B8D9",
+    "#FF8A00",
+    "#7C3AED",
+    st.session_state.color_alerta,
+    "#2BB3A3",
+    "#F5C542",
+]
+
+ESCALA_CUMPLIMIENTO_VIVA = [
+    [0.00, st.session_state.color_alerta],
+    [0.55, "#FF8A00"],
+    [0.75, "#F5C542"],
+    [0.90, st.session_state.color_secundario],
+    [1.00, st.session_state.color_primario],
+]
 
 # =========================================================
 # CSS NIVEL PRO
