@@ -246,26 +246,27 @@ if "color_secundario" not in st.session_state:
 if "color_alerta" not in st.session_state:
     st.session_state.color_alerta = "#D53333"
 
-with st.expander("🎨 Personalizar colores del dashboard", expanded=False):
-    c1, c2, c3 = st.columns(3)
+if st.session_state.get("autenticado", False):
+    with st.expander("🎨 Personalizar colores del dashboard", expanded=False):
+        c1, c2, c3 = st.columns(3)
 
-    with c1:
-        st.session_state.color_primario = st.color_picker(
-            "Color principal",
-            st.session_state.color_primario
-        )
+        with c1:
+            st.session_state.color_primario = st.color_picker(
+                "Color principal",
+                st.session_state.color_primario
+            )
 
-    with c2:
-        st.session_state.color_secundario = st.color_picker(
-            "Color secundario",
-            st.session_state.color_secundario
-        )
+        with c2:
+            st.session_state.color_secundario = st.color_picker(
+                "Color secundario",
+                st.session_state.color_secundario
+            )
 
-    with c3:
-        st.session_state.color_alerta = st.color_picker(
-            "Color alerta/meta",
-            st.session_state.color_alerta
-        )
+        with c3:
+            st.session_state.color_alerta = st.color_picker(
+                "Color alerta/meta",
+                st.session_state.color_alerta
+            )
 
 PALETA_VIVA = [
     st.session_state.color_primario,
