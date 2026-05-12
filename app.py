@@ -1379,13 +1379,33 @@ elif menu == "Cronograma 5S":
 
     if st.session_state.cronograma:
         df_crono = pd.DataFrame(st.session_state.cronograma)
-        df_crono["fecha_inicio"] = pd.to_datetime(df_crono.get("fecha_inicio"), errors="coerce")
-        df_crono["fecha_fin"] = pd.to_datetime(df_crono.get("fecha_fin"), errors="coerce")
+
+        # Blindaje para cronogramas antiguos o registros incompletos.
+        # Plotly Express lanza ValueError si alguna columna usada en x/y/color/text/hover_data no existe.
+        columnas_default_crono = {
+            "bodega": "Sin bodega",
+            "responsable": "Sin responsable",
+            "actividad": "Auditoría 5S",
+            "estado": "Programada",
+            "prioridad": "Media",
+            "meta_bodega": META_BODEGA,
+            "observacion": "",
+            "fecha_inicio": date.today(),
+            "fecha_fin": date.today() + timedelta(days=1),
+        }
+        for col, default in columnas_default_crono.items():
+            if col not in df_crono.columns:
+                df_crono[col] = default
+            df_crono[col] = df_crono[col].fillna(default)
+
+        df_crono["fecha_inicio"] = pd.to_datetime(df_crono["fecha_inicio"], errors="coerce")
+        df_crono["fecha_fin"] = pd.to_datetime(df_crono["fecha_fin"], errors="coerce")
         df_crono = df_crono.dropna(subset=["fecha_inicio", "fecha_fin"]).copy()
 
-        # Evita ValueError en Plotly cuando hay fechas iguales, nulas o invertidas.
-        df_crono.loc[df_crono["fecha_fin"] <= df_crono["fecha_inicio"], "fecha_fin"] = (
-            df_crono.loc[df_crono["fecha_fin"] <= df_crono["fecha_inicio"], "fecha_inicio"] + pd.Timedelta(days=1)
+        # Evita barras con duración cero o fecha final menor a la inicial.
+        mascara_fechas_invalidas = df_crono["fecha_fin"] <= df_crono["fecha_inicio"]
+        df_crono.loc[mascara_fechas_invalidas, "fecha_fin"] = (
+            df_crono.loc[mascara_fechas_invalidas, "fecha_inicio"] + pd.Timedelta(days=1)
         )
 
         fig = None
@@ -1393,69 +1413,83 @@ elif menu == "Cronograma 5S":
             st.warning("No hay actividades válidas para graficar. Revisa las fechas del cronograma.")
         else:
             df_crono["estado_visual"] = df_crono.apply(lambda row: infer_schedule_status(row.to_dict()), axis=1)
+            df_crono["estado_visual"] = df_crono["estado_visual"].fillna("Programada").astype(str)
             df_crono["etiqueta"] = df_crono["responsable"].fillna("Sin responsable").astype(str)
+            df_crono["bodega"] = df_crono["bodega"].fillna("Sin bodega").astype(str)
             df_crono["dia"] = df_crono["fecha_inicio"].dt.strftime("%A %d %b")
 
-            st.markdown("#### Cronograma visual ejecutivo")
-            fig = px.timeline(
-                df_crono,
-                x_start="fecha_inicio",
-                x_end="fecha_fin",
-                y="bodega",
-                color="estado_visual",
-                text="etiqueta",
-                hover_data=["actividad", "responsable", "dia", "prioridad", "meta_bodega", "observacion"],
-                color_discrete_map=COLOR_ESTADO_VIVO,
-            )
-            fig.update_yaxes(autorange="reversed", title="Bodega", showgrid=True, gridcolor="#e5edf6")
-            fig.update_xaxes(title="Fecha", showgrid=True, gridcolor="#dbe6f1", tickformat="%a %d %b")
-            fig.update_traces(textposition="inside", insidetextanchor="middle", marker_line_color="white", marker_line_width=2.2, opacity=0.96)
-            fig.update_layout(
-                height=720,
-                title="Cronograma 5S por bodega, día y responsable",
-                plot_bgcolor="#ffffff",
-                paper_bgcolor="#ffffff",
-                legend_title="Estado",
-                font=dict(size=13, color="#1f2937"),
-                margin=dict(l=150, r=40, t=72, b=45),
-                title_font=dict(size=22, color="#061f45"),
-                colorway=PALETA_VIVA,
-            )
-            st.plotly_chart(fig, use_container_width=True)
+            hover_cols = [
+                col for col in ["actividad", "responsable", "dia", "prioridad", "meta_bodega", "observacion"]
+                if col in df_crono.columns
+            ]
 
-        if fig is not None:
-            cex1, cex2, cex3 = st.columns(3)
-            with cex1:
-                buffer = export_dataframe_excel(df_crono, "Cronograma")
-                st.download_button(
-                    "Exportar cronograma Excel",
-                    data=buffer.getvalue(),
-                    file_name=f"Cronograma_5S_PRO_{get_week_label()}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True,
+            st.markdown("#### Cronograma visual ejecutivo")
+            try:
+                fig = px.timeline(
+                    df_crono,
+                    x_start="fecha_inicio",
+                    x_end="fecha_fin",
+                    y="bodega",
+                    color="estado_visual",
+                    text="etiqueta",
+                    hover_data=hover_cols,
+                    color_discrete_map=COLOR_ESTADO_VIVO,
                 )
-            with cex2:
-                try:
-                    gantt_png, gantt_name = guardar_gantt_png(fig)
-                    with open(gantt_png, "rb") as f:
-                        st.download_button(
-                            "Exportar imagen Gantt",
-                            data=f.read(),
-                            file_name=gantt_name,
-                            mime="image/png",
-                            use_container_width=True,
-                        )
-                except Exception:
-                    st.info("PNG no disponible en este entorno. Usa HTML interactivo.")
-            with cex3:
-                html_buffer, html_name = exportar_gantt_html(fig)
-                st.download_button(
-                    "Exportar Gantt HTML",
-                    data=html_buffer.getvalue(),
-                    file_name=html_name,
-                    mime="text/html",
-                    use_container_width=True,
+            except ValueError as e:
+                st.error("No se pudo dibujar el cronograma porque hay datos antiguos/incompletos. Borra o corrige el cronograma guardado del día y vuelve a intentarlo.")
+                st.caption(str(e))
+                fig = None
+
+            if fig is not None:
+                fig.update_yaxes(autorange="reversed", title="Bodega", showgrid=True, gridcolor="#e5edf6")
+                fig.update_xaxes(title="Fecha", showgrid=True, gridcolor="#dbe6f1", tickformat="%a %d %b")
+                fig.update_traces(textposition="inside", insidetextanchor="middle", marker_line_color="white", marker_line_width=2.2, opacity=0.96)
+                fig.update_layout(
+                    height=720,
+                    title="Cronograma 5S por bodega, día y responsable",
+                    plot_bgcolor="#ffffff",
+                    paper_bgcolor="#ffffff",
+                    legend_title="Estado",
+                    font=dict(size=13, color="#1f2937"),
+                    margin=dict(l=150, r=40, t=72, b=45),
+                    title_font=dict(size=22, color="#061f45"),
+                    colorway=PALETA_VIVA,
                 )
+                st.plotly_chart(fig, use_container_width=True)
+
+            if fig is not None:
+                cex1, cex2, cex3 = st.columns(3)
+                with cex1:
+                    buffer = export_dataframe_excel(df_crono, "Cronograma")
+                    st.download_button(
+                        "Exportar cronograma Excel",
+                        data=buffer.getvalue(),
+                        file_name=f"Cronograma_5S_PRO_{get_week_label()}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        use_container_width=True,
+                    )
+                with cex2:
+                    try:
+                        gantt_png, gantt_name = guardar_gantt_png(fig)
+                        with open(gantt_png, "rb") as f:
+                            st.download_button(
+                                "Exportar imagen Gantt",
+                                data=f.read(),
+                                file_name=gantt_name,
+                                mime="image/png",
+                                use_container_width=True,
+                            )
+                    except Exception:
+                        st.info("PNG no disponible en este entorno. Usa HTML interactivo.")
+                with cex3:
+                    html_buffer, html_name = exportar_gantt_html(fig)
+                    st.download_button(
+                        "Exportar Gantt HTML",
+                        data=html_buffer.getvalue(),
+                        file_name=html_name,
+                        mime="text/html",
+                        use_container_width=True,
+                    )
 
         with st.expander("Ver tabla de programación", expanded=False):
             st.dataframe(df_crono, use_container_width=True)
