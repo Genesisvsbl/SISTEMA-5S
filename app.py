@@ -538,10 +538,66 @@ html, body, [class*="css"] {
 section[data-testid="stSidebar"]{
     background: linear-gradient(180deg, #061f45 0%, #082b5c 100%);
     border-right: 1px solid rgba(255,255,255,0.08);
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+    overflow-x: hidden !important;
+    transition: width 0.26s ease, min-width 0.26s ease, max-width 0.26s ease, box-shadow 0.26s ease;
+    z-index: 9999;
+}
+
+section[data-testid="stSidebar"]:hover{
+    width: 250px !important;
+    min-width: 250px !important;
+    max-width: 250px !important;
+    box-shadow: 16px 0 35px rgba(6,31,69,0.22);
+}
+
+section[data-testid="stSidebar"] > div{
+    width: 250px !important;
+    min-width: 250px !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"]{
+    padding: 2.2rem 1.55rem 1.3rem 1.55rem !important;
+}
+
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stSidebarUserContent"]{
+    padding-left: 1.2rem !important;
 }
 
 section[data-testid="stSidebar"] *{
     color: white !important;
+}
+
+section[data-testid="stSidebar"]:not(:hover) .stRadio label p,
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] p,
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h1,
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h2,
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h3,
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h4,
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] hr,
+section[data-testid="stSidebar"]:not(:hover) .stButton,
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stDateInput"],
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stTextInput"]{
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 0.12s ease;
+}
+
+section[data-testid="stSidebar"]:hover .stRadio label p,
+section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] p,
+section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h1,
+section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h2,
+section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h3,
+section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h4,
+section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] hr,
+section[data-testid="stSidebar"]:hover .stButton,
+section[data-testid="stSidebar"]:hover [data-testid="stDateInput"],
+section[data-testid="stSidebar"]:hover [data-testid="stTextInput"]{
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transition: opacity 0.18s ease 0.08s;
 }
 
 section[data-testid="stSidebar"] .stButton > button{
