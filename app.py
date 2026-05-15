@@ -552,19 +552,21 @@ html, body, [class*="css"] {
 section[data-testid="stSidebar"]{
     background: linear-gradient(180deg, #061f45 0%, #082b5c 100%);
     border-right: 1px solid rgba(255,255,255,0.08);
-    width: 72px !important;
-    min-width: 72px !important;
-    max-width: 72px !important;
+    width: 250px !important;
+    min-width: 250px !important;
+    max-width: 250px !important;
     overflow-x: hidden !important;
     transition: width 0.26s ease, min-width 0.26s ease, max-width 0.26s ease, box-shadow 0.26s ease;
     z-index: 9999;
+    box-shadow: 10px 0 24px rgba(6,31,69,0.10);
 }
 
+/* Menú lateral ejecutivo, legible y sin quedar apretado */
 section[data-testid="stSidebar"]:hover{
     width: 250px !important;
     min-width: 250px !important;
     max-width: 250px !important;
-    box-shadow: 16px 0 35px rgba(6,31,69,0.22);
+    box-shadow: 14px 0 32px rgba(6,31,69,0.18);
 }
 
 section[data-testid="stSidebar"] > div{
@@ -573,51 +575,53 @@ section[data-testid="stSidebar"] > div{
 }
 
 section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"]{
-    padding: 2.2rem 1.55rem 1.3rem 1.55rem !important;
-}
-
-section[data-testid="stSidebar"]:not(:hover) [data-testid="stSidebarUserContent"]{
-    padding-left: 1.2rem !important;
+    padding: 2.0rem 1.45rem 1.3rem 1.45rem !important;
 }
 
 section[data-testid="stSidebar"] *{
     color: white !important;
 }
 
-section[data-testid="stSidebar"]:not(:hover) .stRadio label p,
-section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] p,
-section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h1,
-section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h2,
-section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h3,
-section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h4,
-section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] hr,
-section[data-testid="stSidebar"]:not(:hover) .stButton,
-section[data-testid="stSidebar"]:not(:hover) [data-testid="stDateInput"],
-section[data-testid="stSidebar"]:not(:hover) [data-testid="stTextInput"]{
-    opacity: 0 !important;
-    pointer-events: none !important;
-    transition: opacity 0.12s ease;
+section[data-testid="stSidebar"] .stRadio > label{
+    font-weight: 900 !important;
+    font-size: 0.82rem !important;
+    letter-spacing: 0.01em !important;
+    margin-bottom: 0.6rem !important;
 }
 
-section[data-testid="stSidebar"]:hover .stRadio label p,
-section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] p,
-section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h1,
-section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h2,
-section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h3,
-section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h4,
-section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] hr,
-section[data-testid="stSidebar"]:hover .stButton,
-section[data-testid="stSidebar"]:hover [data-testid="stDateInput"],
-section[data-testid="stSidebar"]:hover [data-testid="stTextInput"]{
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    transition: opacity 0.18s ease 0.08s;
+section[data-testid="stSidebar"] [role="radiogroup"]{
+    gap: 0.20rem !important;
+}
+
+section[data-testid="stSidebar"] [role="radiogroup"] label{
+    padding: 0.20rem 0.05rem !important;
+    min-height: 24px !important;
+    align-items: center !important;
+}
+
+section[data-testid="stSidebar"] [role="radiogroup"] label p{
+    font-size: 0.88rem !important;
+    line-height: 1.15rem !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+}
+
+section[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child{
+    transform: scale(0.72) !important;
+    margin-right: 4px !important;
 }
 
 section[data-testid="stSidebar"] .stButton > button{
     background: rgba(255,255,255,0.10) !important;
     color: white !important;
     border: 1px solid rgba(255,255,255,0.18) !important;
+    border-radius: 14px !important;
+}
+
+section[data-testid="stSidebar"] .stButton > button:hover{
+    background: rgba(255,255,255,0.18) !important;
+    border-color: rgba(255,255,255,0.32) !important;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12) !important;
 }
 
 [data-testid="stSidebar"] input,
