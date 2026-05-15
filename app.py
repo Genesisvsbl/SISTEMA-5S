@@ -536,41 +536,94 @@ html, body, [class*="css"] {
 }
 
 section[data-testid="stSidebar"]{
-    background: linear-gradient(180deg, #061f45 0%, #082b5c 100%);
-    border-right: 1px solid rgba(255,255,255,0.08);
-    width: 72px !important;
-    min-width: 72px !important;
-    max-width: 72px !important;
+    background:
+        radial-gradient(circle at 45% 0%, rgba(21,108,193,0.25), transparent 28%),
+        linear-gradient(180deg, #061f45 0%, #082b5c 100%);
+    border-right: 1px solid rgba(255,255,255,0.10);
+    width: 124px !important;
+    min-width: 124px !important;
+    max-width: 124px !important;
     overflow-x: hidden !important;
-    transition: width 0.26s ease, min-width 0.26s ease, max-width 0.26s ease, box-shadow 0.26s ease;
+    transition: width 0.28s ease, min-width 0.28s ease, max-width 0.28s ease, box-shadow 0.28s ease;
     z-index: 9999;
 }
 
 section[data-testid="stSidebar"]:hover{
-    width: 250px !important;
-    min-width: 250px !important;
-    max-width: 250px !important;
-    box-shadow: 16px 0 35px rgba(6,31,69,0.22);
+    width: 258px !important;
+    min-width: 258px !important;
+    max-width: 258px !important;
+    box-shadow: 18px 0 42px rgba(6,31,69,0.24);
 }
 
 section[data-testid="stSidebar"] > div{
-    width: 250px !important;
-    min-width: 250px !important;
+    width: 258px !important;
+    min-width: 258px !important;
 }
 
 section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"]{
-    padding: 2.2rem 1.55rem 1.3rem 1.55rem !important;
+    padding: 2.15rem 1.45rem 1.25rem 1.45rem !important;
 }
 
 section[data-testid="stSidebar"]:not(:hover) [data-testid="stSidebarUserContent"]{
-    padding-left: 1.2rem !important;
+    padding-left: 1.0rem !important;
+    padding-right: 0.85rem !important;
 }
 
 section[data-testid="stSidebar"] *{
     color: white !important;
 }
 
-section[data-testid="stSidebar"]:not(:hover) .stRadio label p,
+section[data-testid="stSidebar"] .stRadio > label{
+    font-size: 0.76rem !important;
+    letter-spacing: 0.02em !important;
+    opacity: 0.95 !important;
+    margin-bottom: 0.45rem !important;
+}
+
+section[data-testid="stSidebar"] .stRadio label{
+    min-height: 30px !important;
+    padding: 3px 7px !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+section[data-testid="stSidebar"] .stRadio label:hover{
+    background: rgba(255,255,255,0.10) !important;
+    transform: translateX(2px);
+}
+
+section[data-testid="stSidebar"] .stRadio label p{
+    font-size: 0.78rem !important;
+    line-height: 1.05rem !important;
+    font-weight: 800 !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+}
+
+section[data-testid="stSidebar"]:hover .stRadio label p{
+    font-size: 0.88rem !important;
+    line-height: 1.15rem !important;
+    white-space: nowrap !important;
+}
+
+section[data-testid="stSidebar"] [role="radiogroup"] label span:first-child{
+    width: 9px !important;
+    height: 9px !important;
+    min-width: 9px !important;
+    max-width: 9px !important;
+    border-width: 1px !important;
+    margin-right: 4px !important;
+}
+
+section[data-testid="stSidebar"] [role="radiogroup"] label span:first-child > div{
+    width: 5px !important;
+    height: 5px !important;
+}
+
 section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] p,
 section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h1,
 section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h2,
@@ -585,7 +638,6 @@ section[data-testid="stSidebar"]:not(:hover) [data-testid="stTextInput"]{
     transition: opacity 0.12s ease;
 }
 
-section[data-testid="stSidebar"]:hover .stRadio label p,
 section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] p,
 section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h1,
 section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h2,
@@ -604,6 +656,12 @@ section[data-testid="stSidebar"] .stButton > button{
     background: rgba(255,255,255,0.10) !important;
     color: white !important;
     border: 1px solid rgba(255,255,255,0.18) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+section[data-testid="stSidebar"] .stButton > button:hover{
+    background: rgba(255,255,255,0.16) !important;
+    border-color: rgba(255,255,255,0.30) !important;
 }
 
 [data-testid="stSidebar"] input,
