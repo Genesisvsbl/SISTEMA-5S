@@ -234,17 +234,16 @@ COLOR_ESTADO_VIVO = {
     "Crítica": "#D53333",
 }
 
+
+# Tema visual tecnológico solo para el cronograma.
 TEMA_TECH = {
     "paper": "#031022",
     "plot": "#051935",
-    "panel": "#071F45",
-    "panel_2": "#092A57",
     "grid": "rgba(0, 174, 255, 0.22)",
     "grid_soft": "rgba(0, 174, 255, 0.10)",
     "line": "rgba(0, 174, 255, 0.36)",
     "text": "#EAF4FF",
     "muted": "#A8C7F0",
-    "glow": "#20C4FF",
     "border": "rgba(32, 196, 255, 0.30)",
 }
 
@@ -550,32 +549,37 @@ html, body, [class*="css"] {
 }
 
 section[data-testid="stSidebar"]{
-    background: linear-gradient(180deg, #061f45 0%, #082b5c 100%);
-    border-right: 1px solid rgba(255,255,255,0.08);
-    width: 250px !important;
-    min-width: 250px !important;
-    max-width: 250px !important;
+    background:
+        radial-gradient(circle at 45% 0%, rgba(21,108,193,0.25), transparent 28%),
+        linear-gradient(180deg, #061f45 0%, #082b5c 100%);
+    border-right: 1px solid rgba(255,255,255,0.10);
+    width: 124px !important;
+    min-width: 124px !important;
+    max-width: 124px !important;
     overflow-x: hidden !important;
-    transition: width 0.26s ease, min-width 0.26s ease, max-width 0.26s ease, box-shadow 0.26s ease;
+    transition: width 0.28s ease, min-width 0.28s ease, max-width 0.28s ease, box-shadow 0.28s ease;
     z-index: 9999;
-    box-shadow: 10px 0 24px rgba(6,31,69,0.10);
 }
 
-/* Menú lateral ejecutivo, legible y sin quedar apretado */
 section[data-testid="stSidebar"]:hover{
-    width: 250px !important;
-    min-width: 250px !important;
-    max-width: 250px !important;
-    box-shadow: 14px 0 32px rgba(6,31,69,0.18);
+    width: 258px !important;
+    min-width: 258px !important;
+    max-width: 258px !important;
+    box-shadow: 18px 0 42px rgba(6,31,69,0.24);
 }
 
 section[data-testid="stSidebar"] > div{
-    width: 250px !important;
-    min-width: 250px !important;
+    width: 258px !important;
+    min-width: 258px !important;
 }
 
 section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"]{
-    padding: 2.0rem 1.45rem 1.3rem 1.45rem !important;
+    padding: 2.15rem 1.45rem 1.25rem 1.45rem !important;
+}
+
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stSidebarUserContent"]{
+    padding-left: 1.0rem !important;
+    padding-right: 0.85rem !important;
 }
 
 section[data-testid="stSidebar"] *{
@@ -583,45 +587,94 @@ section[data-testid="stSidebar"] *{
 }
 
 section[data-testid="stSidebar"] .stRadio > label{
-    font-weight: 900 !important;
-    font-size: 0.82rem !important;
-    letter-spacing: 0.01em !important;
-    margin-bottom: 0.6rem !important;
+    font-size: 0.76rem !important;
+    letter-spacing: 0.02em !important;
+    opacity: 0.95 !important;
+    margin-bottom: 0.45rem !important;
 }
 
-section[data-testid="stSidebar"] [role="radiogroup"]{
-    gap: 0.20rem !important;
-}
-
-section[data-testid="stSidebar"] [role="radiogroup"] label{
-    padding: 0.20rem 0.05rem !important;
-    min-height: 24px !important;
+section[data-testid="stSidebar"] .stRadio label{
+    min-height: 30px !important;
+    padding: 3px 7px !important;
+    border-radius: 12px !important;
+    display: flex !important;
     align-items: center !important;
+    gap: 5px !important;
+    transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-section[data-testid="stSidebar"] [role="radiogroup"] label p{
+section[data-testid="stSidebar"] .stRadio label:hover{
+    background: rgba(255,255,255,0.10) !important;
+    transform: translateX(2px);
+}
+
+section[data-testid="stSidebar"] .stRadio label p{
+    font-size: 0.78rem !important;
+    line-height: 1.05rem !important;
+    font-weight: 800 !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+}
+
+section[data-testid="stSidebar"]:hover .stRadio label p{
     font-size: 0.88rem !important;
     line-height: 1.15rem !important;
-    font-weight: 800 !important;
     white-space: nowrap !important;
 }
 
-section[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child{
-    transform: scale(0.72) !important;
+section[data-testid="stSidebar"] [role="radiogroup"] label span:first-child{
+    width: 9px !important;
+    height: 9px !important;
+    min-width: 9px !important;
+    max-width: 9px !important;
+    border-width: 1px !important;
     margin-right: 4px !important;
+}
+
+section[data-testid="stSidebar"] [role="radiogroup"] label span:first-child > div{
+    width: 5px !important;
+    height: 5px !important;
+}
+
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] p,
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h1,
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h2,
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h3,
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h4,
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] hr,
+section[data-testid="stSidebar"]:not(:hover) .stButton,
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stDateInput"],
+section[data-testid="stSidebar"]:not(:hover) [data-testid="stTextInput"]{
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 0.12s ease;
+}
+
+section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] p,
+section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h1,
+section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h2,
+section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h3,
+section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h4,
+section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] hr,
+section[data-testid="stSidebar"]:hover .stButton,
+section[data-testid="stSidebar"]:hover [data-testid="stDateInput"],
+section[data-testid="stSidebar"]:hover [data-testid="stTextInput"]{
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transition: opacity 0.18s ease 0.08s;
 }
 
 section[data-testid="stSidebar"] .stButton > button{
     background: rgba(255,255,255,0.10) !important;
     color: white !important;
     border: 1px solid rgba(255,255,255,0.18) !important;
-    border-radius: 14px !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 section[data-testid="stSidebar"] .stButton > button:hover{
-    background: rgba(255,255,255,0.18) !important;
-    border-color: rgba(255,255,255,0.32) !important;
-    box-shadow: 0 8px 18px rgba(0,0,0,0.12) !important;
+    background: rgba(255,255,255,0.16) !important;
+    border-color: rgba(255,255,255,0.30) !important;
 }
 
 [data-testid="stSidebar"] input,
@@ -861,6 +914,7 @@ def get_responsable_color(nombre):
 
 
 def mapa_colores_responsables():
+    """Devuelve colores por responsable para que el cronograma se vea ejecutivo y consistente."""
     mapa = {}
     for r in st.session_state.responsables:
         nombre = r.get("nombre")
@@ -1935,7 +1989,7 @@ elif menu == "Cronograma 5S":
 
             st.markdown("#### Cronograma visual ejecutivo")
             df_crono["responsable"] = df_crono["responsable"].fillna("Sin responsable").astype(str)
-            df_crono["texto_barra"] = df_crono["responsable"]
+            df_crono["etiqueta"] = df_crono["responsable"]
             try:
                 fig = px.timeline(
                     df_crono,
@@ -1943,7 +1997,7 @@ elif menu == "Cronograma 5S":
                     x_end="fecha_fin",
                     y="bodega",
                     color="responsable",
-                    text="texto_barra",
+                    text="etiqueta",
                     hover_data=hover_cols,
                     color_discrete_map=mapa_colores_responsables(),
                 )
@@ -1967,7 +2021,7 @@ elif menu == "Cronograma 5S":
                     showgrid=True,
                     gridcolor=TEMA_TECH["grid"],
                     linecolor=TEMA_TECH["line"],
-                    tickformat="%d %b\n%a",
+                    tickformat="%d %b<br>%a",
                     tickfont=dict(color=TEMA_TECH["text"], size=12),
                 )
                 fig.update_traces(
