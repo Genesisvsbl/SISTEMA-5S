@@ -246,6 +246,52 @@ if "color_secundario" not in st.session_state:
 if "color_alerta" not in st.session_state:
     st.session_state.color_alerta = "#D53333"
 
+if "inicio_gauge_colores" not in st.session_state:
+    st.session_state.inicio_gauge_colores = {
+        "barra": st.session_state.color_primario,
+        "rango_bajo": "#FDECEC",
+        "rango_medio": "#FFF7DF",
+        "rango_alto": "#E9F8EF",
+        "linea_meta": st.session_state.color_alerta,
+        "fondo": "#FFFFFF",
+        "texto": "#1F2937",
+    }
+
+
+def render_editor_colores_inicio_gauge():
+    """Icono pequeño para editar únicamente los colores del indicador corporativo del Inicio Ejecutivo."""
+    colores = st.session_state.inicio_gauge_colores
+    if hasattr(st, "popover"):
+        with st.popover("🎨", use_container_width=False):
+            colores["barra"] = st.color_picker("Color barra", colores.get("barra", st.session_state.color_primario), key="inicio_gauge_barra")
+            colores["rango_bajo"] = st.color_picker("Rango bajo", colores.get("rango_bajo", "#FDECEC"), key="inicio_gauge_bajo")
+            colores["rango_medio"] = st.color_picker("Rango medio", colores.get("rango_medio", "#FFF7DF"), key="inicio_gauge_medio")
+            colores["rango_alto"] = st.color_picker("Rango alto", colores.get("rango_alto", "#E9F8EF"), key="inicio_gauge_alto")
+            colores["linea_meta"] = st.color_picker("Línea meta", colores.get("linea_meta", st.session_state.color_alerta), key="inicio_gauge_meta")
+            colores["fondo"] = st.color_picker("Fondo", colores.get("fondo", "#FFFFFF"), key="inicio_gauge_fondo")
+            colores["texto"] = st.color_picker("Texto", colores.get("texto", "#1F2937"), key="inicio_gauge_texto")
+            if st.button("Restablecer", key="inicio_gauge_reset", use_container_width=True):
+                st.session_state.inicio_gauge_colores = {
+                    "barra": st.session_state.color_primario,
+                    "rango_bajo": "#FDECEC",
+                    "rango_medio": "#FFF7DF",
+                    "rango_alto": "#E9F8EF",
+                    "linea_meta": st.session_state.color_alerta,
+                    "fondo": "#FFFFFF",
+                    "texto": "#1F2937",
+                }
+                st.rerun()
+    else:
+        with st.expander("🎨", expanded=False):
+            colores["barra"] = st.color_picker("Color barra", colores.get("barra", st.session_state.color_primario), key="inicio_gauge_barra")
+            colores["rango_bajo"] = st.color_picker("Rango bajo", colores.get("rango_bajo", "#FDECEC"), key="inicio_gauge_bajo")
+            colores["rango_medio"] = st.color_picker("Rango medio", colores.get("rango_medio", "#FFF7DF"), key="inicio_gauge_medio")
+            colores["rango_alto"] = st.color_picker("Rango alto", colores.get("rango_alto", "#E9F8EF"), key="inicio_gauge_alto")
+            colores["linea_meta"] = st.color_picker("Línea meta", colores.get("linea_meta", st.session_state.color_alerta), key="inicio_gauge_meta")
+            colores["fondo"] = st.color_picker("Fondo", colores.get("fondo", "#FFFFFF"), key="inicio_gauge_fondo")
+            colores["texto"] = st.color_picker("Texto", colores.get("texto", "#1F2937"), key="inicio_gauge_texto")
+    return colores
+
 
 PALETA_VIVA = [
     st.session_state.color_primario,
@@ -1345,7 +1391,7 @@ def mostrar_login():
 
     if os.path.exists(LOGO_INOVA):
         st.image(LOGO_INOVA, width=72)
-    st.markdown('<div class="login-title">5S INOVA PRO</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-title">INICIAR SESIÓN</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="login-sub">Auditoría, control visual y excelencia operacional 5S</div>',
         unsafe_allow_html=True,
@@ -1530,7 +1576,11 @@ if menu == "Inicio Ejecutivo":
                 unsafe_allow_html=True,
             )
     with c_right:
-        st.markdown("#### Indicador corporativo")
+        titulo_gauge, icono_gauge = st.columns([0.88, 0.12])
+        with titulo_gauge:
+            st.markdown("#### Indicador corporativo")
+        with icono_gauge:
+            colores_inicio_gauge = render_editor_colores_inicio_gauge()
         fig_gauge = go.Figure(
             go.Indicator(
                 mode="gauge+number+delta",
@@ -1538,18 +1588,18 @@ if menu == "Inicio Ejecutivo":
                 delta={"reference": META_GENERAL},
                 gauge={
                     "axis": {"range": [0, 100]},
-                    "bar": {"color": st.session_state.color_primario},
+                    "bar": {"color": colores_inicio_gauge.get("barra", st.session_state.color_primario)},
                     "steps": [
-                        {"range": [0, 75], "color": "#FDECEC"},
-                        {"range": [75, 90], "color": "#FFF7DF"},
-                        {"range": [90, 100], "color": "#E9F8EF"},
+                        {"range": [0, 75], "color": colores_inicio_gauge.get("rango_bajo", "#FDECEC")},
+                        {"range": [75, 90], "color": colores_inicio_gauge.get("rango_medio", "#FFF7DF")},
+                        {"range": [90, 100], "color": colores_inicio_gauge.get("rango_alto", "#E9F8EF")},
                     ],
-                    "threshold": {"line": {"color": st.session_state.color_alerta, "width": 4}, "thickness": 0.75, "value": META_GENERAL},
+                    "threshold": {"line": {"color": colores_inicio_gauge.get("linea_meta", st.session_state.color_alerta), "width": 4}, "thickness": 0.75, "value": META_GENERAL},
                 },
                 title={"text": "Promedio General 5S"},
             )
         )
-        fig_gauge.update_layout(height=360, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor="white")
+        fig_gauge.update_layout(height=360, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor=colores_inicio_gauge.get("fondo", "#FFFFFF"), font=dict(color=colores_inicio_gauge.get("texto", "#1F2937")))
         st.plotly_chart(fig_gauge, use_container_width=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
