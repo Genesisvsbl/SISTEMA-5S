@@ -67,7 +67,7 @@ else:
     logo_icon = "📦"
 
 st.set_page_config(
-    page_title="5S INOVA PRO",
+    page_title="5S INOVA",
     page_icon=logo_icon,
     layout="wide",
     initial_sidebar_state="expanded",
