@@ -737,6 +737,109 @@ hr{
     border-top: 1px solid #e3edf6;
     margin: 16px 0;
 }
+
+/* =========================================================
+   SIDEBAR EJECUTIVO COMPACTO
+   ========================================================= */
+section[data-testid="stSidebar"]{
+    width: 270px !important;
+    min-width: 270px !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"]{
+    padding: 1.35rem 1.05rem 1.2rem 1.05rem !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stVerticalBlock"]{
+    gap: 0.42rem !important;
+}
+
+.sidebar-section-title{
+    font-size: 0.82rem;
+    font-weight: 950;
+    letter-spacing: 0.03em;
+    color: rgba(255,255,255,0.98);
+    margin: 0 0 0.35rem 0;
+}
+
+.sidebar-divider{
+    height: 1px;
+    background: rgba(255,255,255,0.10);
+    margin: 1.05rem 0 0.95rem 0;
+}
+
+.sidebar-session-card{
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 16px;
+    padding: 12px 13px;
+    margin-bottom: 0.55rem;
+    box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+}
+
+.sidebar-session-label{
+    font-size: 0.70rem;
+    color: rgba(255,255,255,0.68);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+}
+
+.sidebar-session-user{
+    color: #ffffff;
+    font-size: 0.94rem;
+    font-weight: 950;
+}
+
+section[data-testid="stSidebar"] div[role="radiogroup"]{
+    background: rgba(255,255,255,0.055);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 16px;
+    padding: 10px 10px 8px 10px;
+}
+
+section[data-testid="stSidebar"] div[role="radiogroup"] label{
+    min-height: 28px !important;
+    padding: 2px 0 !important;
+}
+
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] p{
+    font-size: 0.80rem !important;
+    font-weight: 800 !important;
+}
+
+section[data-testid="stSidebar"] input{
+    min-height: 38px !important;
+    height: 38px !important;
+    border-radius: 10px !important;
+    font-size: 0.84rem !important;
+}
+
+section[data-testid="stSidebar"] .stDateInput{
+    margin-bottom: 0.25rem !important;
+}
+
+section[data-testid="stSidebar"] .stButton > button{
+    min-height: 40px !important;
+    height: 40px !important;
+    border-radius: 14px !important;
+    font-size: 0.80rem !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
+}
+
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3{
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+section[data-testid="stSidebar"] hr{
+    display:none !important;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -1480,13 +1583,14 @@ render_header()
 # =========================================================
 # SIDEBAR
 # =========================================================
+st.sidebar.markdown('<div class="sidebar-section-title">Módulos</div>', unsafe_allow_html=True)
 menu = st.sidebar.radio(
     "Módulos",
     ["Inicio Ejecutivo", "Cronograma 5S", "Inspección 5S", "Responsables", "Dashboard Ejecutivo"],
+    label_visibility="collapsed",
 )
 
-st.sidebar.markdown("---")
-st.sidebar.subheader("Eliminar por día")
+st.sidebar.markdown('<div class="sidebar-divider"></div><div class="sidebar-section-title">Eliminar por día</div>', unsafe_allow_html=True)
 fecha_borrar_crono = st.sidebar.date_input("Fecha cronograma", value=date.today(), key="fecha_borrar_crono")
 if st.sidebar.button("Eliminar cronograma del día", use_container_width=True):
     antes = len(st.session_state.cronograma)
@@ -1508,8 +1612,16 @@ if st.sidebar.button("Eliminar inspecciones del día", use_container_width=True)
     rebuild_excel_from_inspections(st.session_state.inspecciones)
     st.sidebar.success(f"Inspecciones eliminadas: {antes - len(st.session_state.inspecciones)}")
 
-st.sidebar.markdown("---")
-st.sidebar.markdown(f"**Sesión activa:** {st.session_state.usuario_actual}")
+st.sidebar.markdown(
+    f"""
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-session-card">
+        <div class="sidebar-session-label">Sesión activa</div>
+        <div class="sidebar-session-user">{st.session_state.usuario_actual}</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 if st.sidebar.button("Cerrar sesión", use_container_width=True):
     st.session_state.autenticado = False
     st.session_state.usuario_actual = ""
