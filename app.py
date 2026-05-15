@@ -737,109 +737,6 @@ hr{
     border-top: 1px solid #e3edf6;
     margin: 16px 0;
 }
-
-/* =========================================================
-   SIDEBAR EJECUTIVO COMPACTO
-   ========================================================= */
-section[data-testid="stSidebar"]{
-    width: 270px !important;
-    min-width: 270px !important;
-}
-
-section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"]{
-    padding: 1.35rem 1.05rem 1.2rem 1.05rem !important;
-}
-
-section[data-testid="stSidebar"] [data-testid="stVerticalBlock"]{
-    gap: 0.42rem !important;
-}
-
-.sidebar-section-title{
-    font-size: 0.82rem;
-    font-weight: 950;
-    letter-spacing: 0.03em;
-    color: rgba(255,255,255,0.98);
-    margin: 0 0 0.35rem 0;
-}
-
-.sidebar-divider{
-    height: 1px;
-    background: rgba(255,255,255,0.10);
-    margin: 1.05rem 0 0.95rem 0;
-}
-
-.sidebar-session-card{
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.14);
-    border-radius: 16px;
-    padding: 12px 13px;
-    margin-bottom: 0.55rem;
-    box-shadow: 0 10px 22px rgba(0,0,0,0.10);
-}
-
-.sidebar-session-label{
-    font-size: 0.70rem;
-    color: rgba(255,255,255,0.68);
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 4px;
-}
-
-.sidebar-session-user{
-    color: #ffffff;
-    font-size: 0.94rem;
-    font-weight: 950;
-}
-
-section[data-testid="stSidebar"] div[role="radiogroup"]{
-    background: rgba(255,255,255,0.055);
-    border: 1px solid rgba(255,255,255,0.10);
-    border-radius: 16px;
-    padding: 10px 10px 8px 10px;
-}
-
-section[data-testid="stSidebar"] div[role="radiogroup"] label{
-    min-height: 28px !important;
-    padding: 2px 0 !important;
-}
-
-section[data-testid="stSidebar"] label,
-section[data-testid="stSidebar"] p{
-    font-size: 0.80rem !important;
-    font-weight: 800 !important;
-}
-
-section[data-testid="stSidebar"] input{
-    min-height: 38px !important;
-    height: 38px !important;
-    border-radius: 10px !important;
-    font-size: 0.84rem !important;
-}
-
-section[data-testid="stSidebar"] .stDateInput{
-    margin-bottom: 0.25rem !important;
-}
-
-section[data-testid="stSidebar"] .stButton > button{
-    min-height: 40px !important;
-    height: 40px !important;
-    border-radius: 14px !important;
-    font-size: 0.80rem !important;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
-}
-
-section[data-testid="stSidebar"] h1,
-section[data-testid="stSidebar"] h2,
-section[data-testid="stSidebar"] h3{
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-section[data-testid="stSidebar"] hr{
-    display:none !important;
-}
-
 </style>
 """,
     unsafe_allow_html=True,
@@ -1583,54 +1480,139 @@ render_header()
 # =========================================================
 # SIDEBAR
 # =========================================================
-st.sidebar.markdown('<div class="sidebar-section-title">Módulos</div>', unsafe_allow_html=True)
 menu = st.sidebar.radio(
     "Módulos",
-    ["Inicio Ejecutivo", "Cronograma 5S", "Inspección 5S", "Responsables", "Dashboard Ejecutivo"],
-    label_visibility="collapsed",
+    [
+        "Inicio Ejecutivo",
+        "Cronograma 5S",
+        "Inspección 5S",
+        "Responsables",
+        "Dashboard Ejecutivo",
+        "Configuración",
+    ],
 )
 
-st.sidebar.markdown('<div class="sidebar-divider"></div><div class="sidebar-section-title">Eliminar por día</div>', unsafe_allow_html=True)
-fecha_borrar_crono = st.sidebar.date_input("Fecha cronograma", value=date.today(), key="fecha_borrar_crono")
-if st.sidebar.button("Eliminar cronograma del día", use_container_width=True):
-    antes = len(st.session_state.cronograma)
-    fecha_txt = str(fecha_borrar_crono)
-    st.session_state.cronograma = [
-        x for x in st.session_state.cronograma if str(x.get("fecha_inicio", ""))[:10] != fecha_txt
-    ]
-    safe_save_json(SCHEDULE_PATH, st.session_state.cronograma)
-    st.sidebar.success(f"Actividades eliminadas: {antes - len(st.session_state.cronograma)}")
-
-fecha_borrar_insp = st.sidebar.date_input("Fecha inspección", value=date.today(), key="fecha_borrar_insp")
-if st.sidebar.button("Eliminar inspecciones del día", use_container_width=True):
-    antes = len(st.session_state.inspecciones)
-    fecha_txt = str(fecha_borrar_insp)
-    st.session_state.inspecciones = [
-        x for x in st.session_state.inspecciones if str(x.get("fecha", ""))[:10] != fecha_txt
-    ]
-    safe_save_json(DB_PATH, st.session_state.inspecciones)
-    rebuild_excel_from_inspections(st.session_state.inspecciones)
-    st.sidebar.success(f"Inspecciones eliminadas: {antes - len(st.session_state.inspecciones)}")
-
-st.sidebar.markdown(
-    f"""
-    <div class="sidebar-divider"></div>
-    <div class="sidebar-session-card">
-        <div class="sidebar-session-label">Sesión activa</div>
-        <div class="sidebar-session-user">{st.session_state.usuario_actual}</div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+st.sidebar.markdown("<div style='height:48vh;'></div>", unsafe_allow_html=True)
+st.sidebar.markdown("---")
+st.sidebar.markdown(f"**Sesión activa:** {st.session_state.usuario_actual}")
 if st.sidebar.button("Cerrar sesión", use_container_width=True):
     st.session_state.autenticado = False
     st.session_state.usuario_actual = ""
     st.rerun()
 
 # =========================================================
+# CONFIGURACION / CONSULTA / ELIMINACION
+# =========================================================
+if menu == "Configuración":
+    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Configuración y gestión de registros</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="section-subtitle">Consulta, control y eliminación de cronogramas e inspecciones sin saturar el menú lateral.</div>',
+        unsafe_allow_html=True,
+    )
+
+    tab_consulta, tab_eliminar = st.tabs(["Consulta", "Eliminar registros"])
+
+    with tab_consulta:
+        st.markdown("#### Consulta ejecutiva de inspecciones")
+        if st.session_state.inspecciones:
+            df_config = build_inspection_dataframe(st.session_state.inspecciones)
+            st.dataframe(df_config.sort_values("Fecha", ascending=False), use_container_width=True)
+            buffer = export_dataframe_excel(df_config, "Inspecciones")
+            st.download_button(
+                "Exportar consulta Excel",
+                data=buffer.getvalue(),
+                file_name="Consulta_Inspecciones_5S.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+            )
+        else:
+            st.info("Aún no hay inspecciones guardadas para consultar.")
+
+        st.markdown("#### Consulta de cronograma")
+        if st.session_state.cronograma:
+            df_config_crono = pd.DataFrame(st.session_state.cronograma)
+            st.dataframe(df_config_crono, use_container_width=True)
+        else:
+            st.info("Aún no hay actividades de cronograma guardadas.")
+
+    with tab_eliminar:
+        st.markdown("#### Eliminación por día")
+        c_del1, c_del2 = st.columns(2)
+
+        with c_del1:
+            st.markdown(
+                """
+                <div class="exec-card">
+                    <div style="font-weight:900;color:#061f45;font-size:1.05rem;">Cronograma</div>
+                    <div style="color:#667085;font-size:0.9rem;margin-top:4px;">Elimina las actividades programadas en una fecha específica.</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            fecha_borrar_crono = st.date_input("Fecha cronograma", value=date.today(), key="config_fecha_borrar_crono")
+            if st.button("Eliminar cronograma del día", use_container_width=True, key="config_btn_borrar_crono"):
+                antes = len(st.session_state.cronograma)
+                fecha_txt = str(fecha_borrar_crono)
+                st.session_state.cronograma = [
+                    x for x in st.session_state.cronograma if str(x.get("fecha_inicio", ""))[:10] != fecha_txt
+                ]
+                safe_save_json(SCHEDULE_PATH, st.session_state.cronograma)
+                st.success(f"Actividades eliminadas: {antes - len(st.session_state.cronograma)}")
+
+        with c_del2:
+            st.markdown(
+                """
+                <div class="exec-card">
+                    <div style="font-weight:900;color:#061f45;font-size:1.05rem;">Inspecciones</div>
+                    <div style="color:#667085;font-size:0.9rem;margin-top:4px;">Elimina las inspecciones guardadas en una fecha específica.</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            fecha_borrar_insp = st.date_input("Fecha inspección", value=date.today(), key="config_fecha_borrar_insp")
+            if st.button("Eliminar inspecciones del día", use_container_width=True, key="config_btn_borrar_insp"):
+                antes = len(st.session_state.inspecciones)
+                fecha_txt = str(fecha_borrar_insp)
+                st.session_state.inspecciones = [
+                    x for x in st.session_state.inspecciones if str(x.get("fecha", ""))[:10] != fecha_txt
+                ]
+                safe_save_json(DB_PATH, st.session_state.inspecciones)
+                rebuild_excel_from_inspections(st.session_state.inspecciones)
+                st.success(f"Inspecciones eliminadas: {antes - len(st.session_state.inspecciones)}")
+
+        st.markdown("---")
+        st.markdown("#### Eliminar inspección específica")
+        if st.session_state.inspecciones:
+            opciones_insp = []
+            for reg in st.session_state.inspecciones:
+                etiqueta = f"{reg.get('fecha', '')} · {reg.get('bodega', '')} · {reg.get('responsable', '')} · ID {reg.get('id', '')}"
+                opciones_insp.append((etiqueta, reg.get("id", "")))
+            seleccion = st.selectbox(
+                "Selecciona la inspección",
+                opciones_insp,
+                format_func=lambda x: x[0],
+                key="config_insp_especifica",
+            )
+            if st.button("Eliminar inspección seleccionada", use_container_width=True, key="config_btn_borrar_insp_id"):
+                inspeccion_id = seleccion[1]
+                antes = len(st.session_state.inspecciones)
+                st.session_state.inspecciones = [
+                    x for x in st.session_state.inspecciones if str(x.get("id", "")) != str(inspeccion_id)
+                ]
+                safe_save_json(DB_PATH, st.session_state.inspecciones)
+                rebuild_excel_from_inspections(st.session_state.inspecciones)
+                st.success(f"Inspecciones eliminadas: {antes - len(st.session_state.inspecciones)}")
+                st.rerun()
+        else:
+            st.info("No hay inspecciones disponibles para eliminar.")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# =========================================================
 # INICIO EJECUTIVO
 # =========================================================
-if menu == "Inicio Ejecutivo":
+elif menu == "Inicio Ejecutivo":
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
     st.markdown('<div class="section-title">Centro ejecutivo 5S</div>', unsafe_allow_html=True)
     st.markdown(
