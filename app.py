@@ -1,5 +1,5 @@
 """
-Sistema 5S INOVA - Version PRO Ejecutiva
+Sistema 5S INOVA - Version Ejecutiva
 Archivo: appi.py
 
 Incluye lo solicitado en el Word:
@@ -1000,7 +1000,7 @@ def generar_pdf(registro):
     fecha_id = datetime.now().strftime("%Y%m%d_%H%M%S")
     pdf_path = os.path.join(
         REPORTS_DIR,
-        f"Informe_5S_PRO_{registro['bodega'].replace(' ', '_')}_{fecha_id}.pdf",
+        f"Informe_5S_{registro['bodega'].replace(' ', '_')}_{fecha_id}.pdf",
     )
 
     doc = SimpleDocTemplate(
@@ -1225,7 +1225,7 @@ def generar_pdf(registro):
 
 def exportar_gantt_html(fig):
     semana = get_week_label()
-    filename = f"Cronograma_5S_PRO_{semana}.html"
+    filename = f"Cronograma_5S_{semana}.html"
     html = fig.to_html(full_html=True, include_plotlyjs=True)
     buffer = io.StringIO()
     buffer.write(html)
@@ -1237,7 +1237,7 @@ def guardar_gantt_png(fig):
     import plotly.io as pio
 
     semana = get_week_label()
-    filename = f"Cronograma_5S_PRO_{semana}.png"
+    filename = f"Cronograma_5S_{semana}.png"
     output_path = os.path.join(DATA_DIR, filename)
     img_bytes = pio.to_image(fig, format="png", width=2200, height=1100, scale=2)
     with open(output_path, "wb") as f:
@@ -1460,7 +1460,7 @@ def render_header():
             f"""
             <div class="top-banner">
                 <div>
-                    <div class="top-title">Sistema 5S INOVA PRO</div>
+                    <div class="top-title">Sistema 5S INOVA </div>
                     <div class="top-subtitle">Cronograma ejecutivo, auditoria fotografica, cumplimiento por bodega, responsables, indicadores y reportes profesionales.</div>
                 </div>
                 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
@@ -1666,7 +1666,7 @@ elif menu == "Cronograma 5S":
     responsables_activos = get_responsables_activos()
     nombres_responsables = [r["nombre"] for r in responsables_activos]
 
-    with st.form("form_cronograma_pro"):
+    with st.form("form_cronograma"):
         c1, c2, c3, c4 = st.columns(4)
         with c1:
             bodega = st.selectbox("Bodega", list(BODEGAS.keys()))
@@ -1796,7 +1796,7 @@ elif menu == "Cronograma 5S":
                     st.download_button(
                         "Exportar cronograma Excel",
                         data=buffer.getvalue(),
-                        file_name=f"Cronograma_5S_PRO_{get_week_label()}.xlsx",
+                        file_name=f"Cronograma_5S_{get_week_label()}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                         use_container_width=True,
                     )
@@ -2088,6 +2088,6 @@ elif menu == "Dashboard Ejecutivo":
             with st.expander("Ver histórico ejecutivo", expanded=False):
                 st.dataframe(df_view.sort_values("Fecha", ascending=False), use_container_width=True)
                 buffer = export_dataframe_excel(df_view, "Dashboard")
-                st.download_button("Exportar dashboard filtrado Excel", data=buffer.getvalue(), file_name="Dashboard_5S_PRO.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+                st.download_button("Exportar dashboard filtrado Excel", data=buffer.getvalue(), file_name="Dashboard_5S.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
