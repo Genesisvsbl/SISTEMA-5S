@@ -234,6 +234,20 @@ COLOR_ESTADO_VIVO = {
     "Crítica": "#D53333",
 }
 
+TEMA_TECH = {
+    "paper": "#031022",
+    "plot": "#051935",
+    "panel": "#071F45",
+    "panel_2": "#092A57",
+    "grid": "rgba(0, 174, 255, 0.22)",
+    "grid_soft": "rgba(0, 174, 255, 0.10)",
+    "line": "rgba(0, 174, 255, 0.36)",
+    "text": "#EAF4FF",
+    "muted": "#A8C7F0",
+    "glow": "#20C4FF",
+    "border": "rgba(32, 196, 255, 0.30)",
+}
+
 
 
 # =========================================================
@@ -536,94 +550,41 @@ html, body, [class*="css"] {
 }
 
 section[data-testid="stSidebar"]{
-    background:
-        radial-gradient(circle at 45% 0%, rgba(21,108,193,0.25), transparent 28%),
-        linear-gradient(180deg, #061f45 0%, #082b5c 100%);
-    border-right: 1px solid rgba(255,255,255,0.10);
-    width: 124px !important;
-    min-width: 124px !important;
-    max-width: 124px !important;
+    background: linear-gradient(180deg, #061f45 0%, #082b5c 100%);
+    border-right: 1px solid rgba(255,255,255,0.08);
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
     overflow-x: hidden !important;
-    transition: width 0.28s ease, min-width 0.28s ease, max-width 0.28s ease, box-shadow 0.28s ease;
+    transition: width 0.26s ease, min-width 0.26s ease, max-width 0.26s ease, box-shadow 0.26s ease;
     z-index: 9999;
 }
 
 section[data-testid="stSidebar"]:hover{
-    width: 258px !important;
-    min-width: 258px !important;
-    max-width: 258px !important;
-    box-shadow: 18px 0 42px rgba(6,31,69,0.24);
+    width: 250px !important;
+    min-width: 250px !important;
+    max-width: 250px !important;
+    box-shadow: 16px 0 35px rgba(6,31,69,0.22);
 }
 
 section[data-testid="stSidebar"] > div{
-    width: 258px !important;
-    min-width: 258px !important;
+    width: 250px !important;
+    min-width: 250px !important;
 }
 
 section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"]{
-    padding: 2.15rem 1.45rem 1.25rem 1.45rem !important;
+    padding: 2.2rem 1.55rem 1.3rem 1.55rem !important;
 }
 
 section[data-testid="stSidebar"]:not(:hover) [data-testid="stSidebarUserContent"]{
-    padding-left: 1.0rem !important;
-    padding-right: 0.85rem !important;
+    padding-left: 1.2rem !important;
 }
 
 section[data-testid="stSidebar"] *{
     color: white !important;
 }
 
-section[data-testid="stSidebar"] .stRadio > label{
-    font-size: 0.76rem !important;
-    letter-spacing: 0.02em !important;
-    opacity: 0.95 !important;
-    margin-bottom: 0.45rem !important;
-}
-
-section[data-testid="stSidebar"] .stRadio label{
-    min-height: 30px !important;
-    padding: 3px 7px !important;
-    border-radius: 12px !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 5px !important;
-    transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
-}
-
-section[data-testid="stSidebar"] .stRadio label:hover{
-    background: rgba(255,255,255,0.10) !important;
-    transform: translateX(2px);
-}
-
-section[data-testid="stSidebar"] .stRadio label p{
-    font-size: 0.78rem !important;
-    line-height: 1.05rem !important;
-    font-weight: 800 !important;
-    white-space: normal !important;
-    word-break: normal !important;
-    overflow-wrap: normal !important;
-}
-
-section[data-testid="stSidebar"]:hover .stRadio label p{
-    font-size: 0.88rem !important;
-    line-height: 1.15rem !important;
-    white-space: nowrap !important;
-}
-
-section[data-testid="stSidebar"] [role="radiogroup"] label span:first-child{
-    width: 9px !important;
-    height: 9px !important;
-    min-width: 9px !important;
-    max-width: 9px !important;
-    border-width: 1px !important;
-    margin-right: 4px !important;
-}
-
-section[data-testid="stSidebar"] [role="radiogroup"] label span:first-child > div{
-    width: 5px !important;
-    height: 5px !important;
-}
-
+section[data-testid="stSidebar"]:not(:hover) .stRadio label p,
 section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] p,
 section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h1,
 section[data-testid="stSidebar"]:not(:hover) [data-testid="stMarkdownContainer"] h2,
@@ -638,6 +599,7 @@ section[data-testid="stSidebar"]:not(:hover) [data-testid="stTextInput"]{
     transition: opacity 0.12s ease;
 }
 
+section[data-testid="stSidebar"]:hover .stRadio label p,
 section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] p,
 section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h1,
 section[data-testid="stSidebar"]:hover [data-testid="stMarkdownContainer"] h2,
@@ -656,12 +618,6 @@ section[data-testid="stSidebar"] .stButton > button{
     background: rgba(255,255,255,0.10) !important;
     color: white !important;
     border: 1px solid rgba(255,255,255,0.18) !important;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
-}
-
-section[data-testid="stSidebar"] .stButton > button:hover{
-    background: rgba(255,255,255,0.16) !important;
-    border-color: rgba(255,255,255,0.30) !important;
 }
 
 [data-testid="stSidebar"] input,
@@ -898,6 +854,16 @@ def get_responsable_color(nombre):
         if r.get("nombre") == nombre:
             return r.get("color", "#156CC1")
     return "#156CC1"
+
+
+def mapa_colores_responsables():
+    mapa = {}
+    for r in st.session_state.responsables:
+        nombre = r.get("nombre")
+        if nombre:
+            mapa[nombre] = r.get("color", "#156CC1")
+    mapa.setdefault("Sin responsable", "#19B5FE")
+    return mapa
 
 
 def get_week_label(fecha_ref=None):
@@ -1964,16 +1930,18 @@ elif menu == "Cronograma 5S":
             ]
 
             st.markdown("#### Cronograma visual ejecutivo")
+            df_crono["responsable"] = df_crono["responsable"].fillna("Sin responsable").astype(str)
+            df_crono["texto_barra"] = df_crono["responsable"]
             try:
                 fig = px.timeline(
                     df_crono,
                     x_start="fecha_inicio",
                     x_end="fecha_fin",
                     y="bodega",
-                    color="estado_visual",
-                    text="etiqueta",
+                    color="responsable",
+                    text="texto_barra",
                     hover_data=hover_cols,
-                    color_discrete_map=COLOR_ESTADO_VIVO,
+                    color_discrete_map=mapa_colores_responsables(),
                 )
             except ValueError as e:
                 st.error("No se pudo dibujar el cronograma porque hay datos antiguos/incompletos. Borra o corrige el cronograma guardado del día y vuelve a intentarlo.")
@@ -1981,19 +1949,53 @@ elif menu == "Cronograma 5S":
                 fig = None
 
             if fig is not None:
-                fig.update_yaxes(autorange="reversed", title="Bodega", showgrid=True, gridcolor="#e5edf6")
-                fig.update_xaxes(title="Fecha", showgrid=True, gridcolor="#dbe6f1", tickformat="%a %d %b")
-                fig.update_traces(textposition="inside", insidetextanchor="middle", marker_line_color="white", marker_line_width=2.2, opacity=0.96)
+                fig.update_yaxes(
+                    autorange="reversed",
+                    title="BODEGA",
+                    showgrid=True,
+                    gridcolor=TEMA_TECH["grid_soft"],
+                    linecolor=TEMA_TECH["line"],
+                    tickfont=dict(color=TEMA_TECH["text"], size=12),
+                    title_font=dict(color=TEMA_TECH["muted"], size=12),
+                )
+                fig.update_xaxes(
+                    title="",
+                    showgrid=True,
+                    gridcolor=TEMA_TECH["grid"],
+                    linecolor=TEMA_TECH["line"],
+                    tickformat="%d %b\n%a",
+                    tickfont=dict(color=TEMA_TECH["text"], size=12),
+                )
+                fig.update_traces(
+                    textposition="inside",
+                    insidetextanchor="middle",
+                    textfont=dict(color="#F7FBFF", size=13, family="Segoe UI Semibold"),
+                    marker_line_color="rgba(110, 226, 255, 0.98)",
+                    marker_line_width=1.6,
+                    opacity=0.95,
+                    hoverlabel=dict(bgcolor="#031022", font_color="#F7FBFF"),
+                )
                 fig.update_layout(
-                    height=720,
-                    title="Cronograma 5S por bodega, día y responsable",
-                    plot_bgcolor="#ffffff",
-                    paper_bgcolor="#ffffff",
-                    legend_title="Estado",
-                    font=dict(size=13, color="#1f2937"),
-                    margin=dict(l=150, r=40, t=72, b=45),
-                    title_font=dict(size=22, color="#061f45"),
+                    height=760,
+                    title="CRONOGRAMA EJECUTIVO 5S",
+                    plot_bgcolor=TEMA_TECH["plot"],
+                    paper_bgcolor=TEMA_TECH["paper"],
+                    legend_title="Responsable",
+                    font=dict(size=13, color=TEMA_TECH["text"]),
+                    margin=dict(l=20, r=20, t=74, b=88),
+                    title_font=dict(size=22, color=TEMA_TECH["text"]),
                     colorway=PALETA_VIVA,
+                    bargap=0.28,
+                    legend=dict(
+                        orientation="h",
+                        yanchor="top",
+                        y=-0.15,
+                        x=0,
+                        bgcolor="rgba(3,16,34,0.82)",
+                        bordercolor=TEMA_TECH["border"],
+                        borderwidth=1,
+                        font=dict(color=TEMA_TECH["text"], size=12),
+                    ),
                 )
                 st.plotly_chart(fig, use_container_width=True)
 
